@@ -80,6 +80,11 @@ class TabManager {
     this.activeTab = tabId;
     this.renderTabs();
     await this.loadTabContent(tabId);
+    
+    // Clear calculator history when switching tabs
+    if (calculator) {
+      calculator.clearHistory();
+    }
   }
 
   async loadTabContent(tabId) {

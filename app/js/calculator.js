@@ -4,6 +4,9 @@ class Calculator {
     this.currentInput = '';
     this.inputElement = document.getElementById('calc-input');
     this.shouldClearOnNextInput = false; // Flag to clear on next input
+    this.calculationHistory = []; // Track recent calculations
+    this.historyContainer = document.getElementById('calc-history');
+    this.historyDisplay = document.getElementById('calc-history-display');
   }
 
   init() {
@@ -83,13 +86,15 @@ class Calculator {
     // Parse format: 50×3=150 @140
     // or: 50×3 (auto-calculate)
     // or: 150 (just total)
+    // NEW: (2×3)+(5×2) for multi-item entry
 
     const result = {
       unitPrice: null,
       quantity: null,
       calculatedTotal: null,
       actualCharged: null,
-      isValid: false
+      isValid: false,
+      displayFormula: input // For history display
     };
 
     // Remove spaces
@@ -109,11 +114,47 @@ class Calculator {
       input = equalSplit[0];
     }
 
+    // Check for addition operator (multiple items)
+    if (input.includes('+')) {
+      // Split by + and process each part
+      const parts = input.split('+');
+      let total = 0;
+      const formulas = [];
+      
+      for (const part of parts) {
+        const trimmed = part.trim();
+        if (!trimmed) continue;
+        
+        // Check for multiplication in this part
+        const multiplyMatch = trimmed.match(/^([\d.]+)[×x*]([\d.]+)$/);
+        if (multiplyMatch) {
+          const partTotal = parseFloat(multiplyMatch[1]) * parseFloat(multiplyMatch[2]);
+          total += partTotal;
+          formulas.push(`(${multiplyMatch[1]}×${multiplyMatch[2]})`);
+        } else if (!isNaN(parseFloat(trimmed))) {
+          total += parseFloat(trimmed);
+          formulas.push(trimmed);
+        }
+      }
+      
+      if (total > 0) {
+        result.calculatedTotal = result.calculatedTotal || total;
+        result.actualCharged = result.actualCharged || result.calculatedTotal;
+        result.quantity = parts.length; // Count of items
+        result.unitPrice = total / parts.length; // Average
+        result.displayFormula = formulas.join('+');
+        result.isValid = true;
+      }
+      
+      return result;
+    }
+
     // Check for unit price × quantity
     const multiplyMatch = input.match(/^([\d.]+)[×x*]([\d.]+)$/);
     if (multiplyMatch) {
       result.unitPrice = parseFloat(multiplyMatch[1]);
       result.quantity = parseFloat(multiplyMatch[2]);
+      result.displayFormula = `${result.unitPrice}×${result.quantity}`;
       
       // Auto-calculate if not provided
       if (!result.calculatedTotal) {
@@ -194,6 +235,9 @@ class Calculator {
       // Reload cart
       await cartManager.loadCart(tabId);
 
+      // Add to calculation history
+      this.addToHistory(parsed.displayFormula);
+
       // Set flag to clear on next input
       this.shouldClearOnNextInput = true;
       
@@ -213,6 +257,31 @@ class Calculator {
   clear() {
     this.currentInput = '';
     this.inputElement.value = '';
+  }
+
+  addToHistory(formula) {
+    // Add to history (keep last 10 items)
+    this.calculationHistory.push(formula);
+    if (this.calculationHistory.length > 10) {
+      this.calculationHistory.shift();
+    }
+    
+    this.updateHistoryDisplay();
+  }
+
+  updateHistoryDisplay() {
+    if (this.calculationHistory.length === 0) {
+      this.historyContainer.classList.add('hidden');
+      return;
+    }
+    
+    this.historyContainer.classList.remove('hidden');
+    this.historyDisplay.textContent = this.calculationHistory.join(' + ');
+  }
+
+  clearHistory() {
+    this.calculationHistory = [];
+    this.updateHistoryDisplay();
   }
 }
 

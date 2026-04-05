@@ -11,6 +11,32 @@
   margin-bottom: var(--spacing-md);
 }
 
+/* Calculation History */
+.calc-history {
+  padding: var(--spacing-md);
+  background: var(--background);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-md);
+  border-left: 4px solid var(--primary);
+}
+
+.calc-history-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: var(--spacing-xs);
+}
+
+.calc-history-display {
+  font-family: 'Courier New', monospace;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  word-wrap: break-word;
+  line-height: 1.6;
+}
+
 /* Input Line */
 .input-line {
   display: flex;

@@ -80,10 +80,11 @@ class UIManager {
 
     // Amount received input - calculate change
     document.getElementById('amount-received').addEventListener('input', (e) => {
-      const total = parseFloat(document.getElementById('payment-total').textContent);
+      const totalText = document.getElementById('payment-total').textContent;
+      const total = parseFloat(totalText.replace('KES ', ''));
       const received = parseFloat(e.target.value) || 0;
       const change = received - total;
-      document.getElementById('change-amount').textContent = change.toFixed(2);
+      document.getElementById('change-amount').textContent = `KES ${change.toFixed(2)}`;
     });
 
     // Confirm payment button
