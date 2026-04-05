@@ -90,7 +90,7 @@ class CartManager {
     if (item.discountAmount && item.discountAmount > 0) {
       const discountDiv = document.createElement('div');
       discountDiv.className = 'item-discount';
-      discountDiv.textContent = `Discount: -${item.discountAmount.toFixed(2)} (${item.discountPercent.toFixed(1)}%)`;
+      discountDiv.textContent = `Discount: -KES ${item.discountAmount.toFixed(2)} (${item.discountPercent.toFixed(1)}%)`;
       details.appendChild(discountDiv);
     }
 
@@ -101,13 +101,13 @@ class CartManager {
     if (item.discountAmount && item.discountAmount > 0) {
       const original = document.createElement('div');
       original.className = 'item-original';
-      original.textContent = item.calculatedTotal.toFixed(2);
+      original.textContent = `KES ${item.calculatedTotal.toFixed(2)}`;
       actions.appendChild(original);
     }
 
     const total = document.createElement('div');
     total.className = 'item-total';
-    total.textContent = item.actualCharged.toFixed(2);
+    total.textContent = `KES ${item.actualCharged.toFixed(2)}`;
     actions.appendChild(total);
 
     const deleteBtn = document.createElement('button');

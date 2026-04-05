@@ -125,6 +125,78 @@
   transition: width 0.1s linear;
 }
 
+/* Event Timeline */
+.event-timeline {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.event-timeline h3 {
+  margin-bottom: var(--spacing-md);
+  color: var(--text-primary);
+}
+
+.timeline-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  position: relative;
+  padding-left: var(--spacing-lg);
+}
+
+.timeline-list::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: var(--border);
+}
+
+.timeline-event {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  position: relative;
+  padding: var(--spacing-sm) 0;
+}
+
+.event-marker {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  margin-left: -1px;
+}
+
+.event-details {
+  flex: 1;
+  padding-top: 1px;
+}
+
+.event-label {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.event-time {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
 /* Tabs Review */
 .tabs-review {
   display: flex;
@@ -223,6 +295,14 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  user-select: text;
+  cursor: text;
+  transition: var(--transition);
+}
+
+.review-item:hover {
+  background: white;
+  box-shadow: var(--shadow-sm);
 }
 
 .review-item-formula {

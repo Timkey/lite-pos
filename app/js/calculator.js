@@ -128,7 +128,7 @@ class Calculator {
 
     try {
       // Add to database
-      await shopDB.addLineItem(tabId, {
+      const item = await shopDB.addLineItem(tabId, {
         unitPrice: parsed.unitPrice,
         quantity: parsed.quantity,
         calculatedTotal: parsed.calculatedTotal,
@@ -137,6 +137,22 @@ class Calculator {
         discountPercent: parsed.discountPercent || 0,
         productName: null // Can be tagged later
       });
+
+      // Log event for audio sync
+      const tab = await shopDB.get('tabs', tabId);
+      if (tab) {
+        await shopDB.logEvent(
+          tab.sessionId,
+          tabId,
+          'item_added',
+          {
+            itemId: item.itemId,
+            unitPrice: parsed.unitPrice,
+            quantity: parsed.quantity,
+            actualCharged: parsed.actualCharged
+          }
+        );
+      }
 
       // Reload cart
       await cartManager.loadCart(tabId);

@@ -137,6 +137,9 @@ class UIManager {
       return;
     }
 
+    const tabId = this.currentTabForPayment;
+    const tab = await shopDB.get('tabs', tabId);
+
     const total = parseFloat(document.getElementById('payment-total').textContent);
     let paymentData = {
       method: this.selectedPaymentMethod,
@@ -151,6 +154,20 @@ class UIManager {
       }
       paymentData.amountReceived = received;
       paymentData.change = received - total;
+    }
+
+    // Log checkout event for audio sync
+    if (tab) {
+      await shopDB.logEvent(
+        tab.sessionId,
+        tabId,
+        'checkout',
+        {
+          paymentMethod: this.selectedPaymentMethod,
+          total: total,
+          ...paymentData
+        }
+      );
     }
 
     // Close the tab with payment data

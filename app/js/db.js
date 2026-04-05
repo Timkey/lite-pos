@@ -2,7 +2,7 @@
 class ShopDB {
   constructor() {
     this.dbName = 'ShopTrackerDB';
-    this.version = 1;
+    this.version = 2; // Incremented for events table
     this.db = null;
   }
 
@@ -68,6 +68,18 @@ class ShopDB {
           });
           productsStore.createIndex('name', 'name', { unique: false });
           productsStore.createIndex('unitPrice', 'unitPrice', { unique: false });
+        }
+
+        // Events table (for logging counter clicks, navigation, etc.)
+        if (!db.objectStoreNames.contains('events')) {
+          const eventsStore = db.createObjectStore('events', { 
+            keyPath: 'eventId', 
+            autoIncrement: false 
+          });
+          eventsStore.createIndex('sessionId', 'sessionId', { unique: false });
+          eventsStore.createIndex('tabId', 'tabId', { unique: false });
+          eventsStore.createIndex('eventType', 'eventType', { unique: false });
+          eventsStore.createIndex('timestamp', 'timestamp', { unique: false });
         }
 
         console.log('[DB] Object stores created');
@@ -216,6 +228,27 @@ class ShopDB {
 
   async deleteLineItem(itemId) {
     return this.delete('lineItems', itemId);
+  }
+
+  // Event logging for audio sync
+  async logEvent(sessionId, tabId, eventType, eventData = {}) {
+    return this.add('events', {
+      eventId: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      sessionId,
+      tabId,
+      eventType, // 'counter_available', 'counter_unavailable', 'item_added', 'checkout', etc.
+      timestamp: new Date().toISOString(),
+      timestampMs: Date.now(),
+      ...eventData
+    });
+  }
+
+  async getEventsBySession(sessionId) {
+    return this.getAllByIndex('events', 'sessionId', sessionId);
+  }
+
+  async getEventsByTab(tabId) {
+    return this.getAllByIndex('events', 'tabId', tabId);
   }
 
   // Storage quota check

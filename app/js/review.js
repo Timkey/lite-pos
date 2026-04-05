@@ -49,7 +49,7 @@ class ReviewManager {
             </div>
           </div>
           <div class="detail-stats">
-            <div class="stat-value">${summary.totalSales.toFixed(2)}</div>
+            <div class="stat-value">KES ${summary.totalSales.toFixed(2)}</div>
             <div class="stat-label">Total Sales</div>
           </div>
         </div>
@@ -58,6 +58,12 @@ class ReviewManager {
     // Audio player section
     if (audioChunks.length > 0) {
       html += this.buildAudioPlayer(audioChunks);
+    }
+    
+    // Event timeline section
+    const events = await shopDB.getEventsBySession(session.sessionId);
+    if (events.length > 0) {
+      html += this.buildEventTimeline(events, session);
     }
     
     // Tabs and items
@@ -196,11 +202,11 @@ class ReviewManager {
               <div class="review-item-product">${item.productName || 'Unnamed item'}</div>
               ${item.discountAmount && item.discountAmount > 0 ? `
                 <div class="review-item-discount">
-                  Discount: -${item.discountAmount.toFixed(2)} (${item.discountPercent.toFixed(1)}%)
+                  Discount: -KES ${item.discountAmount.toFixed(2)} (${item.discountPercent.toFixed(1)}%)
                 </div>
               ` : ''}
             </div>
-            <div class="review-item-total">${item.actualCharged.toFixed(2)}</div>
+            <div class="review-item-total">KES ${item.actualCharged.toFixed(2)}</div>
           </div>
         `;
       });
@@ -242,6 +248,60 @@ class ReviewManager {
         </div>
       </div>
     `;
+  }
+
+  buildEventTimeline(events, session) {
+    events.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    
+    const sessionStart = new Date(session.startTime).getTime();
+    
+    const eventIcons = {
+      'counter_available': '✓',
+      'counter_unavailable': '✕',
+      'item_added': '🛒',
+      'checkout': '💳'
+    };
+    
+    const eventLabels = {
+      'counter_available': 'Available',
+      'counter_unavailable': 'Unavailable', 
+      'item_added': 'Item Added',
+      'checkout': 'Checkout'
+    };
+    
+    let html = `
+      <div class="event-timeline">
+        <h3>📍 Event Timeline (${events.length} events)</h3>
+        <div class="timeline-list">
+    `;
+    
+    events.forEach(event => {
+      const eventTime = new Date(event.timestamp);
+      const timeSinceStart = Math.floor((event.timestampMs - sessionStart) / 1000); // seconds
+      const minutes = Math.floor(timeSinceStart / 60);
+      const seconds = timeSinceStart % 60;
+      const timeMarker = `${minutes}:${String(seconds).padStart(2, '0')}`;
+      
+      const icon = eventIcons[event.eventType] || '•';
+      const label = eventLabels[event.eventType] || event.eventType;
+      
+      html += `
+        <div class="timeline-event">
+          <div class="event-marker">${icon}</div>
+          <div class="event-details">
+            <div class="event-label">${label}</div>
+            <div class="event-time">${eventTime.toLocaleTimeString()} (${timeMarker} into session)</div>
+          </div>
+        </div>
+      `;
+    });
+    
+    html += `
+        </div>
+      </div>
+    `;
+    
+    return html;
   }
 
   attachDetailEventListeners() {

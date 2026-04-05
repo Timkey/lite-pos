@@ -102,6 +102,18 @@ class TabManager {
       [field]: Math.max(0, newValue) // Prevent negative values
     });
 
+    // Log event with timestamp for audio sync
+    await shopDB.logEvent(
+      tab.sessionId, 
+      tabId, 
+      `counter_${counterType}`, 
+      { 
+        previousValue: tab[field] || 0,
+        newValue: newValue,
+        increment: increment
+      }
+    );
+
     // Update UI
     if (tabId === this.activeTab) {
       const counterId = counterType === 'available' ? 'counter-available' : 'counter-unavailable';
