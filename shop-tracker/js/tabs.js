@@ -10,7 +10,7 @@ class TabManager {
   }
 
   async createTab() {
-    const session = await sessionManager.getCurrentSession();
+    let session = await sessionManager.getCurrentSession();
     
     if (!session) {
       // Start new session if none exists

@@ -6,6 +6,7 @@ const urlsToCache = [
   '/shop-tracker/css/main.css',
   '/shop-tracker/css/tabs.css',
   '/shop-tracker/css/calculator.css',
+  '/shop-tracker/css/review.css',
   '/shop-tracker/css/responsive.css',
   '/shop-tracker/js/db.js',
   '/shop-tracker/js/audio.js',
@@ -13,6 +14,7 @@ const urlsToCache = [
   '/shop-tracker/js/tabs.js',
   '/shop-tracker/js/calculator.js',
   '/shop-tracker/js/cart.js',
+  '/shop-tracker/js/review.js',
   '/shop-tracker/js/ui.js',
   '/shop-tracker/js/app.js',
   '/shop-tracker/manifest.json'
