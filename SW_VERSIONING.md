@@ -38,21 +38,26 @@ This will:
 3. Update VERSION in `shop-tracker/sw.js`
 4. Example: `20260405-1b84840`
 
-## Automatic Updates (Git Hook)
+## Automatic Updates (Git Hook) ✅ ACTIVE
 
-A pre-commit hook can automatically update the version:
+A pre-commit hook **automatically updates the version with every commit**:
 
-1. **Install Hook** (already created in `.git/hooks/pre-commit.ps1`)
-2. **Configure Git** to use PowerShell hooks:
-   ```powershell
-   git config core.hooksPath .git/hooks
-   ```
+**Status:** ✅ Installed and working at `.git/hooks/pre-commit`
 
 The hook will:
-- Detect when shop-tracker files are committed
-- Auto-update the VERSION
-- Re-stage the updated sw.js
-- No manual intervention needed
+- ✅ Detect when shop-tracker files are committed
+- ✅ Auto-update the VERSION to `YYYYMMDD-commithash`
+- ✅ Re-stage the updated sw.js
+- ✅ **No manual intervention needed**
+
+**Example:**
+```bash
+git add shop-tracker/js/app.js
+git commit -m "feat: add feature"
+# Hook runs automatically
+# VERSION updated to: 20260405-9149e9b
+# Commit includes updated sw.js
+```
 
 ## Benefits
 
@@ -73,23 +78,26 @@ After updating:
 
 ## Deployment Workflow
 
-### Option 1: Manual
+### Automatic (Recommended) ✅
+```bash
+# Just commit - version updates automatically!
+git add .
+git commit -m "feat: your changes"
+# Pre-commit hook auto-updates VERSION before commit
+# You'll see: "Service worker version updated to: 20260405-abc1234"
+```
+
+**Every commit to shop-tracker files automatically gets a new VERSION.**
+
+### Manual (If Hook Disabled)
 ```powershell
 # 1. Make your changes
-# 2. Update version
+# 2. Update version manually
 .\update-sw-version.ps1
 
 # 3. Commit
 git add .
 git commit -m "feat: your changes"
-```
-
-### Option 2: Automatic (Recommended)
-```powershell
-# Just commit - version updates automatically
-git add .
-git commit -m "feat: your changes"
-# Hook auto-updates version before commit completes
 ```
 
 ## Version History
