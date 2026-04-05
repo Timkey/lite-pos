@@ -1,6 +1,10 @@
 // Service Worker for Offline Support
-const CACHE_NAME = 'shop-tracker-v1';
-const urlsToCache = [
+// Update this version with each deployment (use timestamp or commit hash)
+const VERSION = '20260405-1b84840'; // Format: YYYYMMDD-shortcommit or timestamp
+const CACHE_NAME = `shop-tracker-v${VERSION}`;
+
+// Base URLs without cache busting
+const baseUrls = [
   '/shop-tracker/',
   '/shop-tracker/index.html',
   '/shop-tracker/css/main.css',
@@ -19,6 +23,15 @@ const urlsToCache = [
   '/shop-tracker/js/app.js',
   '/shop-tracker/manifest.json'
 ];
+
+// Add cache busting query parameter to all URLs
+const urlsToCache = baseUrls.map(url => {
+  // Don't add query params to root or index (causes issues)
+  if (url.endsWith('/') || url.endsWith('index.html')) {
+    return url;
+  }
+  return `${url}?v=${VERSION}`;
+});
 
 // Install event - cache resources
 self.addEventListener('install', event => {
