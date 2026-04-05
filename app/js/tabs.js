@@ -20,7 +20,9 @@ class TabManager {
     }
 
     const colorIndex = this.tabs.length % this.tabColors.length;
-    const customerNumber = this.tabs.length + 1;
+    // Get total tabs in session (completed + open) to determine customer number
+    const allSessionTabs = await shopDB.getTabsBySession(session.sessionId);
+    const customerNumber = allSessionTabs.length + 1;
 
     const tabId = await shopDB.createTab(session.sessionId, {
       customerId: `Customer ${customerNumber}`,
@@ -70,6 +72,8 @@ class TabManager {
     } else {
       // Switch to another tab
       this.setActiveTab(this.tabs[0].tabId);
+      // Scroll to top so user sees the newly selected tab
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     this.renderTabs();
