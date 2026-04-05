@@ -242,10 +242,16 @@ class ReviewManager {
         }
         
         html += `
-          <div class="review-item">
+          <div class="review-item" data-item-id="${item.itemId}">
             <div>
               <div class="review-item-formula">${formula}</div>
-              <div class="review-item-product">${item.productName || 'Unnamed item'}</div>
+              <div class="review-item-product">
+                <span class="product-name-display">${item.productName || 'Unnamed item'}</span>
+                ${!item.productName || item.productName === 'Unnamed item' ? 
+                  `<button class="btn-edit-item" onclick="reviewManager.editItemName('${item.itemId}', '${tab.tabId}')" title="Edit product name">✏️</button>` 
+                  : item.lastModified ? `<span class="edited-indicator" title="Edited ${new Date(item.lastModified).toLocaleString()}">✓</span>` : ''
+                }
+              </div>
               ${item.discountAmount && item.discountAmount > 0 ? `
                 <div class="review-item-discount">
                   Discount: -KES ${item.discountAmount.toFixed(2)} (${item.discountPercent.toFixed(1)}%)
@@ -272,6 +278,14 @@ class ReviewManager {
           </div>
           <div class="summary-value">KES ${(tab.agreedTotal !== null ? tab.agreedTotal : total).toFixed(2)}</div>
         </div>
+      `;
+      
+      // Payment Info Section
+      if (tab.paymentMethod) {
+        html += this.buildPaymentInfo(tab);
+      }
+      
+      html += `
         ${tab.reconciliationNotes ? `
           <div class="reconciliation-notes-display">
             <strong>📝 Notes:</strong> ${tab.reconciliationNotes}
@@ -587,7 +601,125 @@ class ReviewManager {
     this.audioPlayers.clear();
     this.currentSessionId = null;
   }
+
+  buildPaymentInfo(tab) {
+    let html = '<div class="payment-info-review">';
+    html += '<h4>💳 Payment Information</h4>';
+    
+    html += `<div class="payment-detail-row"><strong>Method:</strong> ${tab.paymentMethod.toUpperCase()}</div>`;
+    
+    if (tab.paymentMethod === 'mpesa' || (tab.paymentMethod === 'mixed' && tab.mixedPayments?.some(p => p.method === 'mpesa'))) {
+      const hasMpesaCode = tab.mpesaTransactionCode && tab.mpesaTransactionCode.trim() !== '';
+      html += `
+        <div class="payment-detail-row mpesa-code-row">
+          <div>
+            <strong>M-Pesa Code:</strong> 
+            ${hasMpesaCode ? 
+              `<span class="mpesa-code-value">${tab.mpesaTransactionCode}</span>
+               <span class="validation-check">✓</span>` :
+              `<span class="missing-code">Not provided</span>`
+            }
+          </div>
+          <button class="btn-edit-mpesa" onclick="reviewManager.editMpesaCode('${tab.tabId}')" title="${hasMpesaCode ? 'Edit' : 'Add'} M-Pesa code">
+            ${hasMpesaCode ? '✏️ Edit' : '➕ Add Code'}
+          </button>
+        </div>
+      `;
+    }
+    
+    if (tab.paymentMethod === 'credit' && tab.creditPhoneNumber) {
+      html += `<div class="payment-detail-row"><strong>Credit Phone:</strong> ${tab.creditPhoneNumber}</div>`;
+    }
+    
+    if (tab.paymentMethod === 'mixed' && tab.mixedPayments) {
+      html += '<div class="payment-detail-row"><strong>Split Details:</strong></div>';
+      html += '<div class="mixed-payments-list">';
+      tab.mixedPayments.forEach(payment => {
+        html += `<div class="mixed-payment-item">• ${payment.method}: KES ${payment.amount.toFixed(2)}</div>`;
+      });
+      html += '</div>';
+    }
+    
+    if (tab.lastModified) {
+      html += `<div class="payment-edited-note">Last edited: ${new Date(tab.lastModified).toLocaleString()}</div>`;
+    }
+    
+    html += '</div>';
+    return html;
+  }
+
+  async editItemName(itemId, tabId) {
+    const item = await shopDB.get('lineItems', itemId);
+    if (!item) return;
+    
+    const newName = prompt('Enter product name:', item.productName || '');
+    if (newName === null || newName.trim() === '') return;
+    
+    try {
+      await shopDB.updateLineItem(itemId, { productName: newName.trim() });
+      await this.showSessionDetail(this.currentSessionId);
+      console.log('[Review] Item name updated:', itemId);
+    } catch (error) {
+      console.error('[Review] Failed to update item name:', error);
+      alert('Failed to update product name');
+    }
+  }
+
+  async editMpesaCode(tabId) {
+    const tab = await shopDB.get('tabs', tabId);
+    if (!tab) return;
+    
+    const currentCode = tab.mpesaTransactionCode || '';
+    const newCode = prompt('Enter M-Pesa transaction code:', currentCode);
+    
+    if (newCode === null) return;
+    
+    const trimmedCode = newCode.trim().toUpperCase();
+    if (trimmedCode !== '' && !this.validateMpesaCode(trimmedCode)) {
+      alert('Invalid M-Pesa code format. Expected 10-12 alphanumeric characters.');
+      return;
+    }
+    
+    if (trimmedCode !== '' && trimmedCode !== currentCode) {
+      const isDuplicate = await this.checkDuplicateMpesaCode(trimmedCode, tabId);
+      if (isDuplicate) {
+        if (!confirm('This M-Pesa code already exists in another transaction. Continue anyway?')) {
+          return;
+        }
+      }
+    }
+    
+    try {
+      const updates = { mpesaTransactionCode: trimmedCode || null };
+      
+      if (trimmedCode !== '' && tab.validationFlags && Array.isArray(tab.validationFlags)) {
+        updates.validationFlags = tab.validationFlags.filter(flag => flag !== 'mpesa_no_code');
+      }
+      
+      await shopDB.updateTabPaymentInfo(tabId, updates);
+      await this.showSessionDetail(this.currentSessionId);
+      console.log('[Review] M-Pesa code updated:', tabId);
+    } catch (error) {
+      console.error('[Review] Failed to update M-Pesa code:', error);
+      alert('Failed to update M-Pesa code');
+    }
+  }
+
+  validateMpesaCode(code) {
+    const regex = /^[A-Z0-9]{10,12}$/i;
+    return regex.test(code);
+  }
+
+  async checkDuplicateMpesaCode(code, excludeTabId) {
+    const allTabs = await shopDB.getAll('tabs');
+    return allTabs.some(tab => 
+      tab.tabId !== excludeTabId && 
+      tab.mpesaTransactionCode && 
+      tab.mpesaTransactionCode.toUpperCase() === code.toUpperCase()
+    );
+  }
 }
 
 // Create global review manager instance
 const reviewManager = new ReviewManager();
+

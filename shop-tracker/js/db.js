@@ -2,7 +2,7 @@
 class ShopDB {
   constructor() {
     this.dbName = 'ShopTrackerDB';
-    this.version = 2; // Incremented for events table
+    this.version = 3; // Incremented for edit tracking
     this.db = null;
   }
 
@@ -213,6 +213,17 @@ class ShopDB {
     return this.put('tabs', { ...tab, ...updates });
   }
 
+  async updateTabPaymentInfo(tabId, paymentUpdates) {
+    const tab = await this.get('tabs', tabId);
+    if (!tab) throw new Error('Tab not found');
+    
+    return this.put('tabs', { 
+      ...tab, 
+      ...paymentUpdates,
+      lastModified: new Date().toISOString()
+    });
+  }
+
   async getTabsBySession(sessionId) {
     return this.getAllByIndex('tabs', 'sessionId', sessionId);
   }
@@ -234,6 +245,16 @@ class ShopDB {
 
   async getLineItemsByTab(tabId) {
     return this.getAllByIndex('lineItems', 'tabId', tabId);
+  }
+
+  async updateLineItem(itemId, updates) {
+    const item = await this.get('lineItems', itemId);
+    if (!item) throw new Error('Line item not found');
+    
+    return this.update('lineItems', itemId, {
+      ...updates,
+      lastModified: new Date().toISOString()
+    });
   }
 
   async deleteLineItem(itemId) {
