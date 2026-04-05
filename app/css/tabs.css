@@ -1,0 +1,220 @@
+/* Tab Styles */
+.tabs-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.tab-bar {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-sm);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  gap: var(--spacing-sm);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tab-bar::-webkit-scrollbar {
+  height: 4px;
+}
+
+.tab-bar::-webkit-scrollbar-track {
+  background: var(--background);
+  border-radius: 2px;
+}
+
+.tab-bar::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+.tab-list {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex: 1;
+}
+
+.tab {
+  position: relative;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  background: var(--background);
+  cursor: pointer;
+  transition: var(--transition);
+  min-width: 120px;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  white-space: nowrap;
+}
+
+.tab:hover {
+  background: var(--border);
+}
+
+.tab.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.tab-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tab-label {
+  flex: 1;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.tab-close {
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--text-primary);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 0.75rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  opacity: 0.7;
+  transition: var(--transition);
+}
+
+.tab.active .tab-close {
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.tab-close:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.btn-add-tab {
+  padding: var(--spacing-md);
+  border: 2px dashed var(--border);
+  background: transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 1.5rem;
+  font-weight: 700;
+  min-width: 60px;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.btn-add-tab:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(37, 99, 235, 0.05);
+}
+
+.btn-add-tab:active {
+  transform: scale(0.95);
+}
+
+/* Tab Colors */
+.tab-color.color-0 { background: #3b82f6; } /* blue */
+.tab-color.color-1 { background: #10b981; } /* green */
+.tab-color.color-2 { background: #f59e0b; } /* amber */
+.tab-color.color-3 { background: #8b5cf6; } /* purple */
+.tab-color.color-4 { background: #ec4899; } /* pink */
+.tab-color.color-5 { background: #06b6d4; } /* cyan */
+.tab-color.color-6 { background: #f97316; } /* orange */
+.tab-color.color-7 { background: #14b8a6; } /* teal */
+
+/* Tab Content */
+.tab-content {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--spacing-lg);
+}
+
+/* Counters Section */
+.counters-section {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.counter {
+  background: var(--background);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  text-align: center;
+  border: 2px solid var(--border);
+}
+
+.counter label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.counter-value {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: var(--spacing-md);
+}
+
+.available-counter {
+  border-color: var(--success);
+}
+
+.available-counter .counter-value {
+  color: var(--success);
+}
+
+.unavailable-counter {
+  border-color: var(--danger);
+}
+
+.unavailable-counter .counter-value {
+  color: var(--danger);
+}
+
+.counter-btn {
+  width: 60px;
+  height: 60px;
+  border: none;
+  border-radius: 50%;
+  font-size: 2rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+  color: white;
+}
+
+.available-counter .counter-btn {
+  background: var(--success);
+}
+
+.unavailable-counter .counter-btn {
+  background: var(--danger);
+}
+
+.counter-btn:active {
+  transform: scale(0.9);
+}
+
+.counter-btn:hover {
+  opacity: 0.9;
+  transform: scale(1.05);
+}

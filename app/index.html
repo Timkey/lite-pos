@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="description" content="Retail shop activity tracker with offline support">
+    
+    <title>Shop Activity Tracker</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="assets/icon-192.svg">
+    <link rel="apple-touch-icon" href="assets/icon-192.svg">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/tabs.css">
+    <link rel="stylesheet" href="css/calculator.css">
+    <link rel="stylesheet" href="css/review.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+    <!-- App Container -->
+    <div id="app">
+        
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <h1>Shop Tracker</h1>
+                <span id="session-status" class="status-badge">No Session</span>
+            </div>
+            <div class="header-right">
+                <button id="btn-history" class="icon-btn" title="View History">
+                    <span>📋</span>
+                </button>
+                <button id="btn-settings" class="icon-btn" title="Settings">
+                    <span>⚙️</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Recording Indicator -->
+        <div id="recording-indicator" class="recording-indicator hidden">
+            <span class="recording-dot"></span>
+            <span id="recording-time">00:00</span>
+        </div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            
+            <!-- Session Controls (when no tabs) -->
+            <div id="session-start" class="session-start">
+                <div class="empty-state">
+                    <div class="empty-icon">🛒</div>
+                    <h2>No Active Session</h2>
+                    <p>Start a new session to serve customers</p>
+                    <button id="btn-new-tab" class="btn-primary btn-large">
+                        Start New Session
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabs Container -->
+            <div id="tabs-container" class="tabs-container hidden">
+                
+                <!-- Tab Bar -->
+                <div class="tab-bar">
+                    <div id="tab-list" class="tab-list">
+                        <!-- Tabs will be added here dynamically -->
+                    </div>
+                    <button id="btn-add-tab" class="btn-add-tab" title="Add Customer Tab">
+                        <span>+</span>
+                    </button>
+                </div>
+
+                <!-- Active Tab Content -->
+                <div id="tab-content" class="tab-content">
+                    
+                    <!-- Counters Section -->
+                    <div class="counters-section">
+                        <div class="counter available-counter">
+                            <label>Available Items</label>
+                            <div class="counter-value" id="counter-available">0</div>
+                            <button class="counter-btn" data-counter="available">+</button>
+                        </div>
+                        <div class="counter unavailable-counter">
+                            <label>Unavailable Items</label>
+                            <div class="counter-value" id="counter-unavailable">0</div>
+                            <button class="counter-btn" data-counter="unavailable">+</button>
+                        </div>
+                    </div>
+
+                    <!-- Calculator Section -->
+                    <div class="calculator-section">
+                        <div class="calculator-header">
+                            <h3>Quick Entry</h3>
+                        </div>
+                        
+                        <!-- Input Line -->
+                        <div class="input-line">
+                            <input 
+                                type="text" 
+                                id="calc-input" 
+                                class="calc-input" 
+                                placeholder="50×3=150 @140"
+                                autocomplete="off"
+                            >
+                            <button id="btn-add-item" class="btn-add-item">Add</button>
+                        </div>
+
+                        <!-- Product Suggestion -->
+                        <div id="product-suggestion" class="product-suggestion hidden">
+                            <span class="suggestion-label">Suggested:</span>
+                            <button class="suggestion-item">
+                                <span class="product-name">Soap bars</span>
+                                <span class="product-price">@50</span>
+                            </button>
+                        </div>
+
+                        <!-- Number Pad -->
+                        <div class="number-pad">
+                            <button class="num-btn" data-value="7">7</button>
+                            <button class="num-btn" data-value="8">8</button>
+                            <button class="num-btn" data-value="9">9</button>
+                            <button class="num-btn operator" data-value="×">×</button>
+                            
+                            <button class="num-btn" data-value="4">4</button>
+                            <button class="num-btn" data-value="5">5</button>
+                            <button class="num-btn" data-value="6">6</button>
+                            <button class="num-btn operator" data-value="=">=</button>
+                            
+                            <button class="num-btn" data-value="1">1</button>
+                            <button class="num-btn" data-value="2">2</button>
+                            <button class="num-btn" data-value="3">3</button>
+                            <button class="num-btn operator" data-value="@">@</button>
+                            
+                            <button class="num-btn" data-value="0">0</button>
+                            <button class="num-btn" data-value=".">.</button>
+                            <button class="num-btn operator" data-value="⌫">⌫</button>
+                            <button class="num-btn operator" data-value="C">C</button>
+                        </div>
+
+                        <!-- Cart Display -->
+                        <div class="cart-section">
+                            <div class="cart-header">
+                                <h4>Cart</h4>
+                                <span id="cart-count" class="cart-count">0 items</span>
+                            </div>
+                            <div id="cart-items" class="cart-items">
+                                <!-- Cart items will be added here -->
+                                <div class="empty-cart">No items yet</div>
+                            </div>
+                            
+                            <!-- Totals -->
+                            <div class="cart-totals">
+                                <div class="total-row">
+                                    <span>Subtotal:</span>
+                                    <span id="cart-subtotal">0.00</span>
+                                </div>
+                                <div class="total-row discount">
+                                    <span>Discounts:</span>
+                                    <span id="cart-discount">0.00</span>
+                                </div>
+                                <div class="total-row grand-total">
+                                    <span>Total:</span>
+                                    <span id="cart-total">0.00</span>
+                                </div>
+                            </div>
+
+                            <!-- Checkout Button -->
+                            <button id="btn-checkout" class="btn-primary btn-block">
+                                Complete Transaction
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </main>
+
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="payment-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Complete Transaction</h3>
+                <button class="modal-close" id="modal-close">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="payment-summary">
+                    <div class="summary-row">
+                        <span>Total Amount:</span>
+                        <span class="amount" id="payment-total">0.00</span>
+                    </div>
+                </div>
+
+                <div class="payment-methods">
+                    <h4>Payment Method</h4>
+                    <div class="payment-options">
+                        <button class="payment-btn" data-method="cash">Cash</button>
+                        <button class="payment-btn" data-method="mpesa">M-Pesa</button>
+                        <button class="payment-btn" data-method="card">Card</button>
+                        <button class="payment-btn" data-method="credit">Credit</button>
+                    </div>
+                </div>
+
+                <div id="cash-section" class="cash-section hidden">
+                    <label for="amount-received">Amount Received:</label>
+                    <input type="number" id="amount-received" class="form-input" step="0.01" min="0">
+                    <div class="change-display">
+                        <span>Change:</span>
+                        <span id="change-amount">0.00</span>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button id="btn-cancel-payment" class="btn-secondary">Cancel</button>
+                    <button id="btn-confirm-payment" class="btn-primary">Confirm Payment</button>
+                </div>
+
+                <div class="cancel-option">
+                    <button id="btn-cancel-transaction" class="btn-text">
+                        Cancel Transaction (Enquiry Only)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div id="history-modal" class="modal hidden">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3>Session History</h3>
+                <button class="modal-close" id="history-close">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="history-list" class="history-list">
+                    <!-- Session history will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/db.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/session.js"></script>
+    <script src="js/tabs.js"></script>
+    <script src="js/calculator.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/review.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Service Worker registered:', reg.scope))
+                    .catch(err => console.error('Service Worker registration failed:', err));
+            });
+        }
+    </script>
+</body>
+</html>

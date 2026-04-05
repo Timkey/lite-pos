@@ -1,0 +1,238 @@
+// IndexedDB Database Layer
+class ShopDB {
+  constructor() {
+    this.dbName = 'ShopTrackerDB';
+    this.version = 1;
+    this.db = null;
+  }
+
+  async init() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(this.dbName, this.version);
+
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        this.db = request.result;
+        console.log('[DB] Database initialized');
+        resolve(this.db);
+      };
+
+      request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+
+        // Sessions table
+        if (!db.objectStoreNames.contains('sessions')) {
+          const sessionsStore = db.createObjectStore('sessions', { 
+            keyPath: 'sessionId', 
+            autoIncrement: false 
+          });
+          sessionsStore.createIndex('startTime', 'startTime', { unique: false });
+          sessionsStore.createIndex('status', 'status', { unique: false });
+        }
+
+        // Tabs table
+        if (!db.objectStoreNames.contains('tabs')) {
+          const tabsStore = db.createObjectStore('tabs', { 
+            keyPath: 'tabId', 
+            autoIncrement: false 
+          });
+          tabsStore.createIndex('sessionId', 'sessionId', { unique: false });
+          tabsStore.createIndex('status', 'status', { unique: false });
+        }
+
+        // Line Items table
+        if (!db.objectStoreNames.contains('lineItems')) {
+          const itemsStore = db.createObjectStore('lineItems', { 
+            keyPath: 'itemId', 
+            autoIncrement: false 
+          });
+          itemsStore.createIndex('tabId', 'tabId', { unique: false });
+          itemsStore.createIndex('timestamp', 'timestamp', { unique: false });
+        }
+
+        // Audio Chunks table
+        if (!db.objectStoreNames.contains('audioChunks')) {
+          const audioStore = db.createObjectStore('audioChunks', { 
+            keyPath: 'chunkId', 
+            autoIncrement: false 
+          });
+          audioStore.createIndex('sessionId', 'sessionId', { unique: false });
+          audioStore.createIndex('timestamp', 'timestamp', { unique: false });
+        }
+
+        // Products table (for future use)
+        if (!db.objectStoreNames.contains('products')) {
+          const productsStore = db.createObjectStore('products', { 
+            keyPath: 'productId', 
+            autoIncrement: false 
+          });
+          productsStore.createIndex('name', 'name', { unique: false });
+          productsStore.createIndex('unitPrice', 'unitPrice', { unique: false });
+        }
+
+        console.log('[DB] Object stores created');
+      };
+    });
+  }
+
+  // Generic CRUD operations
+  async add(storeName, data) {
+    const tx = this.db.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
+    return new Promise((resolve, reject) => {
+      const request = store.add(data);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async put(storeName, data) {
+    const tx = this.db.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
+    return new Promise((resolve, reject) => {
+      const request = store.put(data);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async get(storeName, key) {
+    const tx = this.db.transaction(storeName, 'readonly');
+    const store = tx.objectStore(storeName);
+    return new Promise((resolve, reject) => {
+      const request = store.get(key);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async getAll(storeName) {
+    const tx = this.db.transaction(storeName, 'readonly');
+    const store = tx.objectStore(storeName);
+    return new Promise((resolve, reject) => {
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async getAllByIndex(storeName, indexName, value) {
+    const tx = this.db.transaction(storeName, 'readonly');
+    const store = tx.objectStore(storeName);
+    const index = store.index(indexName);
+    return new Promise((resolve, reject) => {
+      const request = index.getAll(value);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async delete(storeName, key) {
+    const tx = this.db.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
+    return new Promise((resolve, reject) => {
+      const request = store.delete(key);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async clear(storeName) {
+    const tx = this.db.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
+    return new Promise((resolve, reject) => {
+      const request = store.clear();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  // Specific methods for sessions
+  async createSession(sessionData) {
+    return this.add('sessions', {
+      sessionId: `session_${Date.now()}`,
+      startTime: new Date().toISOString(),
+      endTime: null,
+      status: 'active',
+      audioChunks: [],
+      ...sessionData
+    });
+  }
+
+  async updateSession(sessionId, updates) {
+    const session = await this.get('sessions', sessionId);
+    return this.put('sessions', { ...session, ...updates });
+  }
+
+  async getActiveSession() {
+    const sessions = await this.getAll('sessions');
+    return sessions.find(s => s.status === 'active');
+  }
+
+  // Specific methods for tabs
+  async createTab(sessionId, tabData) {
+    return this.add('tabs', {
+      tabId: `tab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      sessionId,
+      customerId: null,
+      startTime: new Date().toISOString(),
+      endTime: null,
+      status: 'open',
+      availableCount: 0,
+      unavailableCount: 0,
+      paymentMethod: null,
+      total: 0,
+      ...tabData
+    });
+  }
+
+  async updateTab(tabId, updates) {
+    const tab = await this.get('tabs', tabId);
+    return this.put('tabs', { ...tab, ...updates });
+  }
+
+  async getTabsBySession(sessionId) {
+    return this.getAllByIndex('tabs', 'sessionId', sessionId);
+  }
+
+  async getOpenTabs(sessionId) {
+    const tabs = await this.getTabsBySession(sessionId);
+    return tabs.filter(t => t.status === 'open');
+  }
+
+  // Specific methods for line items
+  async addLineItem(tabId, itemData) {
+    return this.add('lineItems', {
+      itemId: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      tabId,
+      timestamp: new Date().toISOString(),
+      ...itemData
+    });
+  }
+
+  async getLineItemsByTab(tabId) {
+    return this.getAllByIndex('lineItems', 'tabId', tabId);
+  }
+
+  async deleteLineItem(itemId) {
+    return this.delete('lineItems', itemId);
+  }
+
+  // Storage quota check
+  async checkStorageQuota() {
+    if (navigator.storage && navigator.storage.estimate) {
+      const estimate = await navigator.storage.estimate();
+      const percentUsed = (estimate.usage / estimate.quota) * 100;
+      return {
+        usage: estimate.usage,
+        quota: estimate.quota,
+        percentUsed: percentUsed.toFixed(2),
+        available: estimate.quota - estimate.usage
+      };
+    }
+    return null;
+  }
+}
+
+// Create global database instance
+const shopDB = new ShopDB();
