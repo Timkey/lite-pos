@@ -8,21 +8,36 @@ class Calculator {
   init() {
     // Number pad button handlers
     document.querySelectorAll('.num-btn').forEach(btn => {
+      // Prevent focus shift when clicking number pad
+      btn.addEventListener('mousedown', (e) => {
+        e.preventDefault(); // Prevent button from taking focus
+      });
+      
       btn.addEventListener('click', () => {
         this.handleInput(btn.dataset.value);
       });
     });
 
-    // Add item button
-    document.getElementById('btn-add-item').addEventListener('click', () => {
+    // Add item button - prevent focus shift
+    const addBtn = document.getElementById('btn-add-item');
+    addBtn.addEventListener('mousedown', (e) => {
+      e.preventDefault(); // Keep focus on input field
+    });
+    addBtn.addEventListener('click', () => {
       this.addItem();
     });
 
     // Enter key to add item
     this.inputElement.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
+        e.preventDefault();
         this.addItem();
       }
+    });
+
+    // Sync device keyboard input with currentInput state
+    this.inputElement.addEventListener('input', (e) => {
+      this.currentInput = e.target.value;
     });
   }
 
@@ -30,16 +45,22 @@ class Calculator {
     if (value === 'C') {
       // Clear
       this.currentInput = '';
+      this.inputElement.value = '';
     } else if (value === '⌫') {
       // Backspace
       this.currentInput = this.currentInput.slice(0, -1);
+      this.inputElement.value = this.currentInput;
     } else {
       // Append value
       this.currentInput += value;
+      this.inputElement.value = this.currentInput;
     }
 
-    this.inputElement.value = this.currentInput;
-    this.inputElement.focus();
+    // Keep focus without triggering keyboard close
+    // Use setTimeout to ensure it happens after the click event
+    setTimeout(() => {
+      this.inputElement.focus();
+    }, 10);
   }
 
   parseInput(input) {
@@ -157,10 +178,15 @@ class Calculator {
       // Reload cart
       await cartManager.loadCart(tabId);
 
-      // Clear input
-      this.currentInput = '';
-      this.inputElement.value = '';
-      this.inputElement.focus();
+      // Keep focus on input but don't clear immediately
+      // Select all text so next input replaces it (better UX on mobile)
+      this.inputElement.select();
+      
+      // Visual feedback: briefly highlight success
+      this.inputElement.classList.add('success-flash');
+      setTimeout(() => {
+        this.inputElement.classList.remove('success-flash');
+      }, 300);
 
       console.log('[Calculator] Item added:', parsed);
     } catch (error) {

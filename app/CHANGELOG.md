@@ -2,6 +2,15 @@
 
 ## [Unreleased] - 2026-04-05
 
+### Fixed
+- **Calculator Keyboard Persistence**: Fixed mobile keyboard closing after each entry
+  - Number pad and Add button now use `mousedown preventDefault` to keep input focused
+  - Input field stays focused after adding items (text is selected for easy replacement)
+  - Added `inputmode="decimal"` for better mobile numeric keyboard
+  - Disabled autocorrect, autocapitalize, and spellcheck for calculator input
+  - Added input event listener to sync device keyboard with on-screen pad
+  - Visual success flash (green highlight) when item is added
+
 ### Changed
 - **Currency**: Replaced all dollar signs ($) with KES (Kenya Shillings) throughout the application
   - Cart item totals now display as "KES XX.XX"
