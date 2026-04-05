@@ -1,21 +1,21 @@
 // Service Worker for Offline Support
 const CACHE_NAME = 'shop-tracker-v1';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/css/main.css',
-  '/css/tabs.css',
-  '/css/calculator.css',
-  '/css/responsive.css',
-  '/js/db.js',
-  '/js/audio.js',
-  '/js/session.js',
-  '/js/tabs.js',
-  '/js/calculator.js',
-  '/js/cart.js',
-  '/js/ui.js',
-  '/js/app.js',
-  '/manifest.json'
+  '/shop-tracker/',
+  '/shop-tracker/index.html',
+  '/shop-tracker/css/main.css',
+  '/shop-tracker/css/tabs.css',
+  '/shop-tracker/css/calculator.css',
+  '/shop-tracker/css/responsive.css',
+  '/shop-tracker/js/db.js',
+  '/shop-tracker/js/audio.js',
+  '/shop-tracker/js/session.js',
+  '/shop-tracker/js/tabs.js',
+  '/shop-tracker/js/calculator.js',
+  '/shop-tracker/js/cart.js',
+  '/shop-tracker/js/ui.js',
+  '/shop-tracker/js/app.js',
+  '/shop-tracker/manifest.json'
 ];
 
 // Install event - cache resources
