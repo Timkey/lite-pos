@@ -75,13 +75,25 @@ class UIManager {
         btn.classList.add('active');
         this.selectedPaymentMethod = btn.dataset.method;
 
-        // Show cash section if cash selected
-        const cashSection = document.getElementById('cash-section');
+        // Hide all payment sections
+        document.getElementById('cash-section').classList.add('hidden');
+        document.getElementById('mpesa-section').classList.add('hidden');
+        document.getElementById('credit-section').classList.add('hidden');
+        document.getElementById('mixed-section').classList.add('hidden');
+
+        // Show relevant section based on payment method
         if (this.selectedPaymentMethod === 'cash') {
-          cashSection.classList.remove('hidden');
+          document.getElementById('cash-section').classList.remove('hidden');
           document.getElementById('amount-received').focus();
-        } else {
-          cashSection.classList.add('hidden');
+        } else if (this.selectedPaymentMethod === 'mpesa') {
+          document.getElementById('mpesa-section').classList.remove('hidden');
+          document.getElementById('mpesa-reference').focus();
+        } else if (this.selectedPaymentMethod === 'credit') {
+          document.getElementById('credit-section').classList.remove('hidden');
+          document.getElementById('credit-phone').focus();
+        } else if (this.selectedPaymentMethod === 'mixed') {
+          document.getElementById('mixed-section').classList.remove('hidden');
+          this.updateMixedPaymentSummary();
         }
       });
     });
@@ -93,6 +105,47 @@ class UIManager {
       const received = parseFloat(e.target.value) || 0;
       const change = received - total;
       document.getElementById('change-amount').textContent = `KES ${change.toFixed(2)}`;
+    });
+
+    // Mixed payment split checkboxes
+    document.querySelectorAll('.split-checkbox').forEach(checkbox => {
+      checkbox.addEventListener('change', (e) => {
+        const method = e.target.id.replace('split-', '');
+        const amountInput = document.getElementById(`split-${method}-amount`);
+        amountInput.disabled = !e.target.checked;
+        if (!e.target.checked) {
+          amountInput.value = '';
+        }
+        
+        // Show/hide additional fields for mpesa and credit
+        if (method === 'mpesa') {
+          const refSection = document.getElementById('split-mpesa-ref-section');
+          if (e.target.checked) {
+            refSection.classList.remove('hidden');
+          } else {
+            refSection.classList.add('hidden');
+            document.getElementById('split-mpesa-reference').value = '';
+          }
+        } else if (method === 'credit') {
+          const detailsSection = document.getElementById('split-credit-details-section');
+          if (e.target.checked) {
+            detailsSection.classList.remove('hidden');
+          } else {
+            detailsSection.classList.add('hidden');
+            document.getElementById('split-credit-phone').value = '';
+            document.getElementById('split-credit-notes').value = '';
+          }
+        }
+        
+        this.updateMixedPaymentSummary();
+      });
+    });
+
+    // Mixed payment amount inputs
+    document.querySelectorAll('.split-amount').forEach(input => {
+      input.addEventListener('input', () => {
+        this.updateMixedPaymentSummary();
+      });
     });
 
     // Confirm payment button
@@ -127,7 +180,29 @@ class UIManager {
     document.getElementById('change-amount').textContent = '0.00';
     document.getElementById('agreed-amount').value = '';
     document.getElementById('reconciliation-notes').value = '';
+    
+    // Hide all payment sections
     document.getElementById('cash-section').classList.add('hidden');
+    document.getElementById('mpesa-section').classList.add('hidden');
+    document.getElementById('credit-section').classList.add('hidden');
+    document.getElementById('mixed-section').classList.add('hidden');
+    
+    // Reset all payment inputs
+    document.getElementById('mpesa-reference').value = '';
+    document.getElementById('credit-phone').value = '';
+    document.getElementById('credit-notes').value = '';
+    
+    // Reset mixed payment
+    document.querySelectorAll('.split-checkbox').forEach(cb => cb.checked = false);
+    document.querySelectorAll('.split-amount').forEach(input => {
+      input.value = '';
+      input.disabled = true;
+    });
+    document.getElementById('split-mpesa-ref-section').classList.add('hidden');
+    document.getElementById('split-credit-details-section').classList.add('hidden');
+    document.getElementById('split-mpesa-reference').value = '';
+    document.getElementById('split-credit-phone').value = '';
+    document.getElementById('split-credit-notes').value = '';
     
     // Reset payment method selection
     document.querySelectorAll('.payment-btn').forEach(b => b.classList.remove('active'));
@@ -137,6 +212,31 @@ class UIManager {
     await this.showValidationWarnings(tabId);
 
     this.paymentModal.classList.remove('hidden');
+  }
+
+  updateMixedPaymentSummary() {
+    const totalText = document.getElementById('payment-total').textContent;
+    const total = parseFloat(totalText.replace('KES ', ''));
+    
+    const cashAmount = parseFloat(document.getElementById('split-cash-amount').value) || 0;
+    const mpesaAmount = parseFloat(document.getElementById('split-mpesa-amount').value) || 0;
+    const creditAmount = parseFloat(document.getElementById('split-credit-amount').value) || 0;
+    
+    const splitTotal = cashAmount + mpesaAmount + creditAmount;
+    const remaining = total - splitTotal;
+    
+    document.getElementById('split-total-amount').textContent = `KES ${splitTotal.toFixed(2)}`;
+    document.getElementById('split-remaining-amount').textContent = `KES ${remaining.toFixed(2)}`;
+    
+    // Highlight remaining if not zero
+    const remainingElement = document.getElementById('split-remaining-amount');
+    if (Math.abs(remaining) < 0.01) {
+      remainingElement.style.color = 'var(--success)';
+    } else if (remaining > 0) {
+      remainingElement.style.color = 'var(--warning)';
+    } else {
+      remainingElement.style.color = 'var(--danger)';
+    }
   }
 
   async showValidationWarnings(tabId) {
@@ -201,15 +301,81 @@ class UIManager {
       reconciliationNotes: reconciliationNotes
     };
 
+    // Validate based on payment method
     if (this.selectedPaymentMethod === 'cash') {
       const received = parseFloat(document.getElementById('amount-received').value);
       const amountToPay = agreedTotal !== null ? agreedTotal : total;
       if (!received || received < amountToPay) {
-        alert(`Amount received must be equal to or greater than ${amountToPay.toFixed(2)}`);
+        alert(`Amount received must be equal to or greater than KES ${amountToPay.toFixed(2)}`);
         return;
       }
       paymentData.amountReceived = received;
       paymentData.change = received - amountToPay;
+      
+    } else if (this.selectedPaymentMethod === 'mpesa') {
+      const mpesaRef = document.getElementById('mpesa-reference').value.trim();
+      if (!mpesaRef) {
+        alert('Please enter M-Pesa transaction code');
+        return;
+      }
+      paymentData.mpesaReference = mpesaRef;
+      
+    } else if (this.selectedPaymentMethod === 'credit') {
+      const creditPhone = document.getElementById('credit-phone').value.trim();
+      const creditNotes = document.getElementById('credit-notes').value.trim();
+      if (!creditPhone) {
+        alert('Phone number is required for credit transactions');
+        return;
+      }
+      paymentData.creditPhone = creditPhone;
+      paymentData.creditNotes = creditNotes || null;
+      
+    } else if (this.selectedPaymentMethod === 'mixed') {
+      const cashAmount = parseFloat(document.getElementById('split-cash-amount').value) || 0;
+      const mpesaAmount = parseFloat(document.getElementById('split-mpesa-amount').value) || 0;
+      const creditAmount = parseFloat(document.getElementById('split-credit-amount').value) || 0;
+      
+      const splitTotal = cashAmount + mpesaAmount + creditAmount;
+      const amountToPay = agreedTotal !== null ? agreedTotal : total;
+      
+      if (Math.abs(splitTotal - amountToPay) > 0.01) {
+        alert(`Split total (KES ${splitTotal.toFixed(2)}) must equal payment amount (KES ${amountToPay.toFixed(2)})`);
+        return;
+      }
+      
+      const splitDetails = [];
+      if (cashAmount > 0) splitDetails.push({ method: 'cash', amount: cashAmount });
+      
+      if (mpesaAmount > 0) {
+        const mpesaRef = document.getElementById('split-mpesa-reference').value.trim();
+        if (!mpesaRef) {
+          alert('Please enter M-Pesa transaction code for M-Pesa portion');
+          return;
+        }
+        splitDetails.push({ method: 'mpesa', amount: mpesaAmount, reference: mpesaRef });
+      }
+      
+      if (creditAmount > 0) {
+        const creditPhone = document.getElementById('split-credit-phone').value.trim();
+        const creditNotes = document.getElementById('split-credit-notes').value.trim();
+        if (!creditPhone) {
+          alert('Phone number is required for credit portion');
+          return;
+        }
+        splitDetails.push({ 
+          method: 'credit', 
+          amount: creditAmount, 
+          phone: creditPhone,
+          notes: creditNotes || null
+        });
+      }
+      
+      if (splitDetails.length === 0) {
+        alert('Please enter at least one payment method for mixed payment');
+        return;
+      }
+      
+      paymentData.splitDetails = splitDetails;
     }
 
     // Calculate and store validation flags
