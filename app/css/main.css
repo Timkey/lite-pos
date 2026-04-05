@@ -610,3 +610,55 @@ body {
   background: var(--background);
   border-color: var(--primary);
 }
+
+/* Mobile Responsive Filters */
+@media (max-width: 768px) {
+  .history-filters {
+    padding: var(--spacing-md);
+  }
+
+  .filter-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-sm);
+  }
+
+  .filter-group {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .filter-group label {
+    margin-bottom: 0.25rem;
+  }
+
+  .filter-select,
+  .filter-input {
+    width: 100%;
+  }
+
+  .pagination-controls {
+    margin-left: 0;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .pagination-info {
+    flex: 1;
+    text-align: center;
+  }
+
+  .btn-sm {
+    width: auto;
+  }
+
+  /* Stack filter buttons vertically on mobile */
+  .filter-row:first-child {
+    gap: var(--spacing-sm);
+  }
+
+  .filter-row:first-child button {
+    width: 100%;
+  }
+}
