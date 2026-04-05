@@ -211,6 +211,11 @@
   padding: var(--spacing-lg);
 }
 
+.tab-review-card.has-validation-issues {
+  border-color: var(--warning);
+  border-width: 2px;
+}
+
 .tab-review-header {
   display: flex;
   justify-content: space-between;
@@ -234,6 +239,58 @@
 
 .tab-title h4 {
   font-size: 1.125rem;
+}
+
+.validation-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--warning);
+  color: #92400e;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-left: var(--spacing-sm);
+}
+
+/* Validation Issues */
+.validation-issues {
+  margin: var(--spacing-md) 0;
+  padding: var(--spacing-md);
+  background: #fef3c7;
+  border-radius: var(--radius-md);
+}
+
+.validation-issue {
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  background: white;
+  font-size: 0.875rem;
+}
+
+.validation-issue:last-child {
+  margin-bottom: 0;
+}
+
+.validation-issue.moderate {
+  border-left: 4px solid var(--warning);
+  color: #92400e;
+}
+
+.validation-issue.critical {
+  border-left: 4px solid var(--danger);
+  background: #fee2e2;
+  color: #991b1b;
+  font-weight: 600;
+}
+
+.reconciliation-notes-display {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--background);
+  border-left: 4px solid var(--primary);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
 }
 
 .tab-status {

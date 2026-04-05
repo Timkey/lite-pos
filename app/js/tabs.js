@@ -52,7 +52,10 @@ class TabManager {
       status: paymentData ? 'completed' : 'cancelled',
       paymentMethod: paymentData?.method,
       amountReceived: paymentData?.amountReceived,
-      change: paymentData?.change
+      change: paymentData?.change,
+      agreedTotal: paymentData?.agreedTotal,
+      reconciliationNotes: paymentData?.reconciliationNotes,
+      validationFlags: paymentData?.validationFlags || tab.validationFlags
     });
 
     // Remove from active tabs

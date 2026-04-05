@@ -194,6 +194,16 @@ class ShopDB {
       unavailableCount: 0,
       paymentMethod: null,
       total: 0,
+      agreedTotal: null, // Actual amount customer pays (can differ from calculated)
+      reconciliationNotes: null, // Notes for discrepancies
+      validationFlags: {
+        counterMismatch: false,
+        amountMismatch: false,
+        incompleteLogging: false,
+        missingItemCount: 0,
+        amountDifference: 0,
+        hasDiscrepancy: false
+      },
       ...tabData
     });
   }
@@ -249,6 +259,39 @@ class ShopDB {
 
   async getEventsByTab(tabId) {
     return this.getAllByIndex('events', 'tabId', tabId);
+  }
+
+  // Validation helpers
+  async calculateValidationFlags(tabId) {
+    const tab = await this.get('tabs', tabId);
+    const lineItems = await this.getLineItemsByTab(tabId);
+    
+    if (!tab) return null;
+
+    const totalLogged = lineItems.length;
+    const expectedCount = tab.availableCount || 0;
+    const calculatedTotal = lineItems.reduce((sum, item) => sum + item.actualCharged, 0);
+    const agreedTotal = tab.agreedTotal !== null ? tab.agreedTotal : calculatedTotal;
+    
+    const counterMismatch = expectedCount !== totalLogged;
+    const amountMismatch = Math.abs(calculatedTotal - agreedTotal) > 0.01;
+    const incompleteLogging = expectedCount > 0 && totalLogged === 0;
+    const missingItemCount = expectedCount - totalLogged;
+    const amountDifference = agreedTotal - calculatedTotal;
+    
+    return {
+      counterMismatch,
+      amountMismatch,
+      incompleteLogging,
+      criticalIssue: incompleteLogging || Math.abs(missingItemCount) > 3,
+      missingItemCount,
+      amountDifference: parseFloat(amountDifference.toFixed(2)),
+      hasDiscrepancy: counterMismatch || amountMismatch || incompleteLogging,
+      calculatedTotal,
+      agreedTotal,
+      expectedCount,
+      actualCount: totalLogged
+    };
   }
 
   // Storage quota check

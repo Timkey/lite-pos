@@ -124,6 +124,49 @@ class ReviewManager {
     return html;
   }
 
+  buildValidationIssues(tab) {
+    const flags = tab.validationFlags;
+    if (!flags || !flags.hasDiscrepancy) return '';
+    
+    let html = `<div class="validation-issues">`;
+    
+    if (flags.incompleteLogging) {
+      html += `
+        <div class="validation-issue critical">
+          <strong>⚠️ CRITICAL:</strong> ${flags.expectedCount} items in counter but ZERO items logged!
+        </div>
+      `;
+    }
+    
+    if (flags.counterMismatch && !flags.incompleteLogging) {
+      if (flags.missingItemCount > 0) {
+        html += `
+          <div class="validation-issue ${flags.missingItemCount > 3 ? 'critical' : 'moderate'}">
+            <strong>⚠️ Counter Mismatch:</strong> ${flags.expectedCount} available but only ${flags.actualCount} logged (${flags.missingItemCount} missing details)
+          </div>
+        `;
+      } else {
+        html += `
+          <div class="validation-issue moderate">
+            <strong>⚠️ Counter Mismatch:</strong> ${flags.actualCount} items logged but counter shows ${flags.expectedCount}
+          </div>
+        `;
+      }
+    }
+    
+    if (flags.amountMismatch) {
+      html += `
+        <div class="validation-issue moderate">
+          <strong>💰 Amount Difference:</strong> Calculated KES ${flags.calculatedTotal.toFixed(2)}, Agreed KES ${flags.agreedTotal.toFixed(2)} 
+          (${flags.amountDifference > 0 ? '+' : ''}${flags.amountDifference.toFixed(2)})
+        </div>
+      `;
+    }
+    
+    html += `</div>`;
+    return html;
+  }
+
   async buildTabReview(tab) {
     const items = await shopDB.getLineItemsByTab(tab.tabId);
     
@@ -141,16 +184,19 @@ class ReviewManager {
     const total = subtotal - totalDiscount;
     
     let html = `
-      <div class="tab-review-card">
+      <div class="tab-review-card ${tab.validationFlags?.hasDiscrepancy ? 'has-validation-issues' : ''}">
         <div class="tab-review-header">
           <div class="tab-title">
             <div class="tab-color-indicator color-${tab.colorIndex}"></div>
             <h4>${tab.customerId}</h4>
+            ${tab.validationFlags?.hasDiscrepancy ? '<span class="validation-badge">⚠️ Issues</span>' : ''}
           </div>
           <div class="tab-status ${tab.status}">
             ${tab.status === 'completed' ? '✓ ' : '✕ '}${tab.status}
           </div>
         </div>
+        
+        ${tab.validationFlags?.hasDiscrepancy ? this.buildValidationIssues(tab) : ''}
         
         <div class="tab-review-meta">
           <div class="meta-item">
@@ -216,11 +262,21 @@ class ReviewManager {
       html += `
         <div class="tab-review-summary">
           <div>
-            <div class="summary-label">Total Amount</div>
-            ${totalDiscount > 0 ? `<div style="font-size: 0.875rem; color: var(--success);">Discounts: -${totalDiscount.toFixed(2)}</div>` : ''}
+            <div class="summary-label">Calculated Total</div>
+            ${totalDiscount > 0 ? `<div style="font-size: 0.875rem; color: var(--success);">Discounts: -KES ${totalDiscount.toFixed(2)}</div>` : ''}
+            ${tab.agreedTotal !== null && Math.abs(tab.agreedTotal - total) > 0.01 ? `
+              <div style="font-size: 0.875rem; color: var(--warning); font-weight: 600; margin-top: var(--spacing-xs);">
+                Agreed Amount: KES ${tab.agreedTotal.toFixed(2)}
+              </div>
+            ` : ''}
           </div>
-          <div class="summary-value">${total.toFixed(2)}</div>
+          <div class="summary-value">KES ${(tab.agreedTotal !== null ? tab.agreedTotal : total).toFixed(2)}</div>
         </div>
+        ${tab.reconciliationNotes ? `
+          <div class="reconciliation-notes-display">
+            <strong>📝 Notes:</strong> ${tab.reconciliationNotes}
+          </div>
+        ` : ''}
       `;
     } else {
       html += '<div class="empty-state" style="padding: var(--spacing-lg); text-align: center; color: var(--text-secondary);">No items in this tab</div>';

@@ -109,20 +109,60 @@ class UIManager {
     });
   }
 
-  showPaymentModal(tabId) {
+  async showPaymentModal(tabId) {
     this.currentTabForPayment = tabId;
     const total = cartManager.getTotal();
     
-    document.getElementById('payment-total').textContent = total.toFixed(2);
+    document.getElementById('payment-total').textContent = `KES ${total.toFixed(2)}`;
     document.getElementById('amount-received').value = '';
     document.getElementById('change-amount').textContent = '0.00';
+    document.getElementById('agreed-amount').value = '';
+    document.getElementById('reconciliation-notes').value = '';
     document.getElementById('cash-section').classList.add('hidden');
     
     // Reset payment method selection
     document.querySelectorAll('.payment-btn').forEach(b => b.classList.remove('active'));
     this.selectedPaymentMethod = null;
 
+    // Calculate and show validation warnings
+    await this.showValidationWarnings(tabId);
+
     this.paymentModal.classList.remove('hidden');
+  }
+
+  async showValidationWarnings(tabId) {
+    const validation = await shopDB.calculateValidationFlags(tabId);
+    const warningsContainer = document.getElementById('validation-warnings');
+    const warningsList = document.getElementById('validation-list');
+    
+    warningsList.innerHTML = '';
+    
+    if (!validation || !validation.hasDiscrepancy) {
+      warningsContainer.classList.add('hidden');
+      return;
+    }
+
+    // Show warnings
+    warningsContainer.classList.remove('hidden');
+    
+    if (validation.counterMismatch) {
+      const li = document.createElement('li');
+      if (validation.missingItemCount > 0) {
+        li.textContent = `${validation.expectedCount} items available but only ${validation.actualCount} logged (${validation.missingItemCount} missing details)`;
+        li.className = validation.missingItemCount > 3 ? 'warning-critical' : 'warning-moderate';
+      } else {
+        li.textContent = `${validation.actualCount} items logged but counter shows ${validation.expectedCount}`;
+        li.className = 'warning-moderate';
+      }
+      warningsList.appendChild(li);
+    }
+    
+    if (validation.incompleteLogging) {
+      const li = document.createElement('li');
+      li.textContent = `CRITICAL: ${validation.expectedCount} items in counter but ZERO items logged!`;
+      li.className = 'warning-critical';
+      warningsList.appendChild(li);
+    }
   }
 
   hidePaymentModal() {
@@ -140,21 +180,32 @@ class UIManager {
     const tabId = this.currentTabForPayment;
     const tab = await shopDB.get('tabs', tabId);
 
-    const total = parseFloat(document.getElementById('payment-total').textContent);
+    const total = parseFloat(document.getElementById('payment-total').textContent.replace('KES ', ''));
+    const agreedAmountInput = document.getElementById('agreed-amount').value;
+    const agreedTotal = agreedAmountInput ? parseFloat(agreedAmountInput) : null;
+    const reconciliationNotes = document.getElementById('reconciliation-notes').value.trim() || null;
+    
     let paymentData = {
       method: this.selectedPaymentMethod,
-      amount: total
+      amount: agreedTotal !== null ? agreedTotal : total,
+      agreedTotal: agreedTotal,
+      reconciliationNotes: reconciliationNotes
     };
 
     if (this.selectedPaymentMethod === 'cash') {
       const received = parseFloat(document.getElementById('amount-received').value);
-      if (!received || received < total) {
-        alert('Amount received must be equal to or greater than total');
+      const amountToPay = agreedTotal !== null ? agreedTotal : total;
+      if (!received || received < amountToPay) {
+        alert(`Amount received must be equal to or greater than ${amountToPay.toFixed(2)}`);
         return;
       }
       paymentData.amountReceived = received;
-      paymentData.change = received - total;
+      paymentData.change = received - amountToPay;
     }
+
+    // Calculate and store validation flags
+    const validation = await shopDB.calculateValidationFlags(tabId);
+    paymentData.validationFlags = validation;
 
     // Log checkout event for audio sync
     if (tab) {
@@ -165,6 +216,8 @@ class UIManager {
         {
           paymentMethod: this.selectedPaymentMethod,
           total: total,
+          agreedTotal: agreedTotal,
+          hasDiscrepancy: validation?.hasDiscrepancy || false,
           ...paymentData
         }
       );

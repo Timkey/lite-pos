@@ -196,11 +196,30 @@
                 <button class="modal-close" id="modal-close">×</button>
             </div>
             <div class="modal-body">
+                <!-- Validation Warnings -->
+                <div id="validation-warnings" class="validation-warnings hidden">
+                    <div class="warning-header">⚠️ Validation Warnings</div>
+                    <ul id="validation-list" class="validation-list"></ul>
+                </div>
+
                 <div class="payment-summary">
                     <div class="summary-row">
-                        <span>Total Amount:</span>
+                        <span>Calculated Total:</span>
                         <span class="amount" id="payment-total">0.00</span>
                     </div>
+                </div>
+
+                <!-- Agreed Amount Section -->
+                <div class="agreed-amount-section">
+                    <label for="agreed-amount">Agreed Amount (if different):</label>
+                    <input type="number" id="agreed-amount" class="form-input" step="0.01" min="0" placeholder="Leave blank if same">
+                    <small class="form-hint">Enter only if customer negotiated a different price</small>
+                </div>
+
+                <!-- Reconciliation Notes -->
+                <div class="reconciliation-notes-section">
+                    <label for="reconciliation-notes">Notes (optional):</label>
+                    <textarea id="reconciliation-notes" class="form-textarea" rows="2" placeholder="e.g., Customer haggled, gave discount, rushed checkout..."></textarea>
                 </div>
 
                 <div class="payment-methods">
