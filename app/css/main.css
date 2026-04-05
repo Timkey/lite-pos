@@ -568,6 +568,10 @@ body {
   font-family: inherit;
 }
 
+.filter-input[type="date"] {
+  max-width: 150px;
+}
+
 .filter-select:focus,
 .filter-input:focus {
   outline: none;
@@ -638,6 +642,10 @@ body {
     width: 100%;
   }
 
+  .filter-input[type="date"] {
+    max-width: 100%;
+  }
+
   .pagination-controls {
     margin-left: 0;
     justify-content: space-between;
@@ -660,5 +668,18 @@ body {
 
   .filter-row:first-child button {
     width: 100%;
+  }
+}
+
+/* Tablet and Desktop - Compact Calendar Filters */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .filter-input[type="date"] {
+    max-width: 130px;
+  }
+}
+
+@media (min-width: 1025px) {
+  .filter-row {
+    flex-wrap: nowrap;
   }
 }
