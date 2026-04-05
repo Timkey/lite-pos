@@ -124,8 +124,22 @@ class CartManager {
 
   async removeItem(itemId) {
     try {
+      // Find the item being removed to update history
+      const removedItem = this.items.find(item => item.itemId === itemId);
+      
       await shopDB.deleteLineItem(itemId);
       await this.loadCart(this.currentTabId);
+      
+      // Remove from calculator history if present
+      if (removedItem && calculator && calculator.calculationHistory) {
+        const displayFormula = removedItem.displayFormula;
+        const index = calculator.calculationHistory.indexOf(displayFormula);
+        if (index > -1) {
+          calculator.calculationHistory.splice(index, 1);
+          calculator.updateHistoryDisplay();
+        }
+      }
+      
       console.log('[Cart] Item removed:', itemId);
     } catch (error) {
       console.error('[Cart] Failed to remove item:', error);

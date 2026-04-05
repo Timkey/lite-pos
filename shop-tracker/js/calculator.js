@@ -271,11 +271,10 @@ class Calculator {
 
   updateHistoryDisplay() {
     if (this.calculationHistory.length === 0) {
-      this.historyContainer.classList.add('hidden');
+      this.historyDisplay.textContent = '—';
       return;
     }
     
-    this.historyContainer.classList.remove('hidden');
     this.historyDisplay.textContent = this.calculationHistory.join(' + ');
   }
 
