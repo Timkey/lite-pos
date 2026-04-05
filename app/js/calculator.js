@@ -3,6 +3,7 @@ class Calculator {
   constructor() {
     this.currentInput = '';
     this.inputElement = document.getElementById('calc-input');
+    this.shouldClearOnNextInput = false; // Flag to clear on next input
   }
 
   init() {
@@ -37,19 +38,34 @@ class Calculator {
 
     // Sync device keyboard input with currentInput state
     this.inputElement.addEventListener('input', (e) => {
-      this.currentInput = e.target.value;
+      // If flag is set, clear before allowing new input from device keyboard
+      if (this.shouldClearOnNextInput) {
+        this.inputElement.value = e.data || ''; // Just the new character
+        this.currentInput = this.inputElement.value;
+        this.shouldClearOnNextInput = false;
+      } else {
+        this.currentInput = e.target.value;
+      }
     });
   }
 
   handleInput(value) {
+    // If flag is set, clear before adding new input
+    if (this.shouldClearOnNextInput && value !== 'C' && value !== '⌫') {
+      this.currentInput = '';
+      this.shouldClearOnNextInput = false;
+    }
+
     if (value === 'C') {
       // Clear
       this.currentInput = '';
       this.inputElement.value = '';
+      this.shouldClearOnNextInput = false;
     } else if (value === '⌫') {
       // Backspace
       this.currentInput = this.currentInput.slice(0, -1);
       this.inputElement.value = this.currentInput;
+      this.shouldClearOnNextInput = false;
     } else {
       // Append value
       this.currentInput += value;
@@ -178,9 +194,8 @@ class Calculator {
       // Reload cart
       await cartManager.loadCart(tabId);
 
-      // Keep focus on input but don't clear immediately
-      // Select all text so next input replaces it (better UX on mobile)
-      this.inputElement.select();
+      // Set flag to clear on next input
+      this.shouldClearOnNextInput = true;
       
       // Visual feedback: briefly highlight success
       this.inputElement.classList.add('success-flash');
