@@ -4,9 +4,6 @@ class Calculator {
     this.currentInput = '';
     this.inputElement = document.getElementById('calc-input');
     this.shouldClearOnNextInput = false; // Flag to clear on next input
-    this.calculationHistory = []; // Track recent calculations
-    this.historyContainer = document.getElementById('calc-history');
-    this.historyDisplay = document.getElementById('calc-history-display');
   }
 
   init() {
@@ -235,9 +232,6 @@ class Calculator {
       // Reload cart
       await cartManager.loadCart(tabId);
 
-      // Add to calculation history
-      this.addToHistory(parsed.displayFormula);
-
       // Set flag to clear on next input
       this.shouldClearOnNextInput = true;
       
@@ -257,30 +251,6 @@ class Calculator {
   clear() {
     this.currentInput = '';
     this.inputElement.value = '';
-  }
-
-  addToHistory(formula) {
-    // Add to history (keep last 10 items)
-    this.calculationHistory.push(formula);
-    if (this.calculationHistory.length > 10) {
-      this.calculationHistory.shift();
-    }
-    
-    this.updateHistoryDisplay();
-  }
-
-  updateHistoryDisplay() {
-    if (this.calculationHistory.length === 0) {
-      this.historyDisplay.textContent = '—';
-      return;
-    }
-    
-    this.historyDisplay.textContent = this.calculationHistory.join(' + ');
-  }
-
-  clearHistory() {
-    this.calculationHistory = [];
-    this.updateHistoryDisplay();
   }
 }
 

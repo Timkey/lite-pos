@@ -40,23 +40,43 @@
 
   .tab-content {
     display: grid;
-    grid-template-columns: 300px 1fr;
-    gap: var(--spacing-xl);
+    grid-template-columns: 1fr 1fr 2fr;
+    gap: var(--spacing-lg);
+    max-width: 1600px;
+    margin: 0 auto;
   }
 
   .counters-section {
+    grid-column: 1 / 2;
     grid-template-columns: 1fr;
+    align-self: start;
+  }
+  
+  .counters-section .calc-history {
+    grid-column: 1 / -1;
   }
 
   .calculator-section {
-    max-width: 600px;
+    grid-column: 2 / 3;
+    max-width: 100%;
+    align-self: start;
+  }
+
+  .cart-section {
+    grid-column: 3 / 4;
+    align-self: start;
   }
 }
 
 /* Large Desktop (1280px and up) */
 @media (min-width: 1280px) {
   .main-content {
-    max-width: 1400px;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  .tab-content {
+    max-width: 1600px;
   }
 }
 

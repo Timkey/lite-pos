@@ -27,6 +27,7 @@ class CartManager {
       subtotalEl.textContent = '0.00';
       discountEl.textContent = '0.00';
       totalEl.textContent = '0.00';
+      this.updateRecentDisplay();
       return;
     }
 
@@ -54,6 +55,29 @@ class CartManager {
     if (this.currentTabId) {
       shopDB.updateTab(this.currentTabId, { total: grandTotal });
     }
+    
+    // Update recent display
+    this.updateRecentDisplay();
+  }
+
+  updateRecentDisplay() {
+    const historyDisplay = document.getElementById('calc-history-display');
+    if (!historyDisplay) return;
+    
+    if (this.items.length === 0) {
+      historyDisplay.textContent = '—';
+      return;
+    }
+    
+    // Show last 10 items in reverse order (most recent first)
+    const recentItems = this.items.slice(-10).reverse().map(item => {
+      if (item.quantity && item.quantity !== 1) {
+        return `${item.unitPrice}×${item.quantity}`;
+      }
+      return item.unitPrice.toString();
+    });
+    
+    historyDisplay.textContent = recentItems.join(' + ');
   }
 
   createItemElement(item) {
@@ -124,22 +148,8 @@ class CartManager {
 
   async removeItem(itemId) {
     try {
-      // Find the item being removed to update history
-      const removedItem = this.items.find(item => item.itemId === itemId);
-      
       await shopDB.deleteLineItem(itemId);
       await this.loadCart(this.currentTabId);
-      
-      // Remove from calculator history if present
-      if (removedItem && calculator && calculator.calculationHistory) {
-        const displayFormula = removedItem.displayFormula;
-        const index = calculator.calculationHistory.indexOf(displayFormula);
-        if (index > -1) {
-          calculator.calculationHistory.splice(index, 1);
-          calculator.updateHistoryDisplay();
-        }
-      }
-      
       console.log('[Cart] Item removed:', itemId);
     } catch (error) {
       console.error('[Cart] Failed to remove item:', error);

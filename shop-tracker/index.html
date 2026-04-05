@@ -94,20 +94,16 @@
                             <div class="counter-value" id="counter-unavailable">0</div>
                             <button class="counter-btn" data-counter="unavailable">+</button>
                         </div>
-                    </div>
-
-                    <!-- Calculator Section -->
-                    <div class="calculator-section">
-                        <div class="calculator-header">
-                            <h3>Quick Entry</h3>
-                        </div>
                         
                         <!-- Calculation History -->
                         <div id="calc-history" class="calc-history">
                             <div class="calc-history-label">Recent:</div>
                             <div id="calc-history-display" class="calc-history-display">—</div>
                         </div>
-                        
+                    </div>
+
+                    <!-- Calculator Section -->
+                    <div class="calculator-section">
                         <!-- Input Line -->
                         <div class="input-line">
                             <input 
@@ -155,13 +151,14 @@
                             <button class="num-btn operator" data-value="⌫">⌫</button>
                             <button class="num-btn operator" data-value="C">C</button>
                         </div>
+                    </div>
 
-                        <!-- Cart Display -->
-                        <div class="cart-section">
-                            <div class="cart-header">
-                                <h4>Cart</h4>
-                                <span id="cart-count" class="cart-count">0 items</span>
-                            </div>
+                    <!-- Cart Section (separate from calculator) -->
+                    <div class="cart-section">
+                        <div class="cart-header">
+                            <h4>Cart</h4>
+                            <span id="cart-count" class="cart-count">0 items</span>
+                        </div>
                             <div id="cart-items" class="cart-items">
                                 <!-- Cart items will be added here -->
                                 <div class="empty-cart">No items yet</div>

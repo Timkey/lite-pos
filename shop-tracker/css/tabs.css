@@ -152,6 +152,10 @@
   margin-bottom: var(--spacing-lg);
 }
 
+.counters-section .calc-history {
+  grid-column: 1 / -1;
+}
+
 .counter {
   background: var(--background);
   border-radius: var(--radius-md);
