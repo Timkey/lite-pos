@@ -314,11 +314,7 @@ class UIManager {
       
     } else if (this.selectedPaymentMethod === 'mpesa') {
       const mpesaRef = document.getElementById('mpesa-reference').value.trim();
-      if (!mpesaRef) {
-        alert('Please enter M-Pesa transaction code');
-        return;
-      }
-      paymentData.mpesaReference = mpesaRef;
+      paymentData.mpesaReference = mpesaRef || null;
       
     } else if (this.selectedPaymentMethod === 'credit') {
       const creditPhone = document.getElementById('credit-phone').value.trim();
@@ -348,11 +344,7 @@ class UIManager {
       
       if (mpesaAmount > 0) {
         const mpesaRef = document.getElementById('split-mpesa-reference').value.trim();
-        if (!mpesaRef) {
-          alert('Please enter M-Pesa transaction code for M-Pesa portion');
-          return;
-        }
-        splitDetails.push({ method: 'mpesa', amount: mpesaAmount, reference: mpesaRef });
+        splitDetails.push({ method: 'mpesa', amount: mpesaAmount, reference: mpesaRef || null });
       }
       
       if (creditAmount > 0) {
