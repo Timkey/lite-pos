@@ -218,3 +218,89 @@
   opacity: 0.9;
   transform: scale(1.05);
 }
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .tab {
+    min-width: 100px;
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+
+  .tab-label {
+    font-size: 0.8125rem;
+  }
+
+  .tab-close {
+    width: 24px;
+    height: 24px;
+    font-size: 1.125rem;
+  }
+
+  .btn-new-tab {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 0.875rem;
+  }
+
+  .tab-content {
+    padding: var(--spacing-md);
+  }
+
+  .counters-section {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  .counter {
+    padding: var(--spacing-lg);
+  }
+
+  .counter-value {
+    font-size: 2.5rem;
+  }
+
+  .counter-btn {
+    width: 56px;
+    height: 56px;
+    font-size: 1.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .tab {
+    min-width: 90px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  .tab-label {
+    font-size: 0.75rem;
+  }
+
+  .tab-color {
+    width: 6px;
+  }
+
+  .tab-close {
+    width: 20px;
+    height: 20px;
+    font-size: 1rem;
+  }
+
+  .btn-new-tab {
+    min-width: 40px;
+    padding: var(--spacing-xs);
+  }
+
+  .btn-new-tab span:last-child {
+    display: none;
+  }
+
+  .counter-value {
+    font-size: 2rem;
+  }
+
+  .counter-btn {
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+  }
+}

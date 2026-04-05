@@ -838,3 +838,80 @@ body {
     flex-wrap: nowrap;
   }
 }
+
+/* Mobile Payment Modal Styles */
+@media (max-width: 768px) {
+  .payment-detail-section {
+    padding: var(--spacing-md);
+    margin-top: var(--spacing-md);
+  }
+
+  .payment-detail-section h5 {
+    font-size: 1rem;
+  }
+
+  .split-payment-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-sm);
+  }
+
+  .split-payment-row label {
+    min-width: auto;
+    width: 100%;
+  }
+
+  .split-amount {
+    width: 100%;
+  }
+
+  .credit-warning {
+    font-size: 0.8125rem;
+    padding: var(--spacing-sm);
+  }
+
+  .split-summary {
+    padding-top: var(--spacing-md);
+    margin-top: var(--spacing-md);
+  }
+
+  .split-summary-row {
+    font-size: 1rem;
+  }
+
+  #split-remaining-amount {
+    font-size: 1.125rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .payment-detail-section {
+    padding: var(--spacing-sm);
+  }
+
+  .payment-detail-section h5 {
+    font-size: 0.9375rem;
+  }
+
+  .payment-detail-section input {
+    font-size: 0.875rem;
+  }
+
+  .credit-warning {
+    font-size: 0.75rem;
+    padding: var(--spacing-xs);
+  }
+
+  .split-payment-row label {
+    font-size: 0.875rem;
+  }
+
+  .split-summary-row {
+    font-size: 0.9375rem;
+  }
+
+  #split-remaining-amount {
+    font-size: 1rem;
+  }
+}
+

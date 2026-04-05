@@ -526,3 +526,177 @@
   font-size: 0.875rem;
   color: var(--text-secondary);
 }
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .session-detail {
+    padding: var(--spacing-md);
+  }
+
+  .detail-header {
+    flex-direction: column;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .detail-info h2 {
+    font-size: 1.25rem;
+  }
+
+  .detail-stats {
+    text-align: left;
+    width: 100%;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+  }
+
+  .audio-player {
+    padding: var(--spacing-md);
+  }
+
+  .audio-chunk {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .audio-controls {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .tabs-review {
+    gap: var(--spacing-md);
+  }
+
+  .tab-review {
+    padding: var(--spacing-md);
+  }
+
+  .tab-review-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-sm);
+  }
+
+  .tab-review-stats {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+  }
+
+  .review-stat {
+    flex: 1 1 45%;
+    min-width: 120px;
+  }
+
+  .items-review {
+    padding: var(--spacing-md);
+  }
+
+  .review-item {
+    padding: var(--spacing-sm);
+    font-size: 0.875rem;
+  }
+
+  .payment-info {
+    padding: var(--spacing-md);
+  }
+
+  .info-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.25rem;
+  }
+
+  .info-row strong {
+    font-size: 0.875rem;
+  }
+
+  .validation-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .session-detail {
+    padding: var(--spacing-sm);
+  }
+
+  .detail-header {
+    gap: var(--spacing-md);
+  }
+
+  .detail-info h2 {
+    font-size: 1.125rem;
+  }
+
+  .detail-meta {
+    font-size: 0.8125rem;
+  }
+
+  .stat-value {
+    font-size: 1.25rem;
+  }
+
+  .audio-player {
+    padding: var(--spacing-sm);
+  }
+
+  .audio-player h3 {
+    font-size: 1rem;
+  }
+
+  .audio-chunk {
+    padding: var(--spacing-sm);
+  }
+
+  .chunk-label {
+    font-size: 0.875rem;
+  }
+
+  .chunk-meta {
+    font-size: 0.75rem;
+  }
+
+  .audio-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+
+  .tab-review {
+    padding: var(--spacing-sm);
+  }
+
+  .tab-review-title {
+    font-size: 1rem;
+  }
+
+  .review-stat {
+    flex: 1 1 100%;
+  }
+
+  .review-stat-value {
+    font-size: 1.25rem;
+  }
+
+  .items-review {
+    padding: var(--spacing-sm);
+  }
+
+  .review-item {
+    padding: var(--spacing-xs);
+    font-size: 0.8125rem;
+  }
+
+  .payment-info {
+    padding: var(--spacing-sm);
+  }
+
+  .payment-info h4 {
+    font-size: 1rem;
+  }
+}
