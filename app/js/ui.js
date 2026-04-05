@@ -5,6 +5,14 @@ class UIManager {
     this.historyModal = document.getElementById('history-modal');
     this.currentTabForPayment = null;
     this.selectedPaymentMethod = null;
+    // History pagination
+    this.historyPage = 1;
+    this.historyPageSize = 10;
+    this.historyFilters = {
+      status: 'all', // all, completed, cancelled
+      dateFrom: null,
+      dateTo: null
+    };
   }
 
   init() {
@@ -244,6 +252,41 @@ class UIManager {
       this.hideHistory();
     });
 
+    // Filter controls
+    document.getElementById('btn-apply-filters').addEventListener('click', () => {
+      const status = document.getElementById('filter-status').value;
+      const dateFrom = document.getElementById('filter-date-from').value;
+      const dateTo = document.getElementById('filter-date-to').value;
+      
+      this.historyFilters.status = status;
+      this.historyFilters.dateFrom = dateFrom || null;
+      this.historyFilters.dateTo = dateTo || null;
+      this.historyPage = 1;
+      this.showHistory();
+    });
+
+    document.getElementById('btn-clear-filters').addEventListener('click', () => {
+      this.historyFilters = { status: 'all', dateFrom: null, dateTo: null };
+      this.historyPage = 1;
+      document.getElementById('filter-status').value = 'all';
+      document.getElementById('filter-date-from').value = '';
+      document.getElementById('filter-date-to').value = '';
+      this.showHistory();
+    });
+
+    // Pagination
+    document.getElementById('history-prev-page').addEventListener('click', () => {
+      this.prevHistoryPage();
+    });
+
+    document.getElementById('history-next-page').addEventListener('click', () => {
+      this.nextHistoryPage();
+    });
+
+    document.getElementById('page-size').addEventListener('change', (e) => {
+      this.changeHistoryPageSize(e.target.value);
+    });
+
     // Click outside to close
     this.historyModal.addEventListener('click', (e) => {
       if (e.target === this.historyModal) {
@@ -253,25 +296,114 @@ class UIManager {
   }
 
   async showHistory() {
-    const sessions = await shopDB.getAll('sessions');
-    const historyList = document.getElementById('history-list');
+    let sessions = await shopDB.getAll('sessions');
     
+    // Apply filters
+    sessions = this.applyHistoryFilters(sessions);
+    
+    // Sort by start time (newest first)
+    sessions.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+    
+    // Calculate pagination
+    const totalSessions = sessions.length;
+    const totalPages = Math.ceil(totalSessions / this.historyPageSize);
+    const startIndex = (this.historyPage - 1) * this.historyPageSize;
+    const endIndex = startIndex + this.historyPageSize;
+    const paginatedSessions = sessions.slice(startIndex, endIndex);
+    
+    // Render
+    const historyList = document.getElementById('history-list');
     historyList.innerHTML = '';
 
-    if (sessions.length === 0) {
-      historyList.innerHTML = '<div class="empty-state"><p>No session history</p></div>';
+    if (paginatedSessions.length === 0) {
+      historyList.innerHTML = '<div class="empty-state"><p>No sessions found</p></div>';
     } else {
-      // Sort by start time (newest first)
-      sessions.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
-
-      for (const session of sessions) {
+      for (const session of paginatedSessions) {
         const summary = await sessionManager.getSessionSummary(session.sessionId);
         const itemEl = this.createHistoryItem(summary);
         historyList.appendChild(itemEl);
       }
     }
+    
+    // Update pagination controls
+    this.updateHistoryPagination(totalSessions, totalPages);
 
     this.historyModal.classList.remove('hidden');
+  }
+
+  applyHistoryFilters(sessions) {
+    return sessions.filter(session => {
+      // Status filter
+      if (this.historyFilters.status !== 'all') {
+        if (session.status !== this.historyFilters.status) return false;
+      }
+      
+      // Date range filter
+      if (this.historyFilters.dateFrom) {
+        const sessionDate = new Date(session.startTime);
+        const fromDate = new Date(this.historyFilters.dateFrom);
+        fromDate.setHours(0, 0, 0, 0);
+        if (sessionDate < fromDate) return false;
+      }
+      
+      if (this.historyFilters.dateTo) {
+        const sessionDate = new Date(session.startTime);
+        const toDate = new Date(this.historyFilters.dateTo);
+        toDate.setHours(23, 59, 59, 999);
+        if (sessionDate > toDate) return false;
+      }
+      
+      return true;
+    });
+  }
+
+  updateHistoryPagination(totalSessions, totalPages) {
+    const paginationInfo = document.getElementById('history-pagination-info');
+    const prevBtn = document.getElementById('history-prev-page');
+    const nextBtn = document.getElementById('history-next-page');
+    
+    if (paginationInfo) {
+      const startItem = (this.historyPage - 1) * this.historyPageSize + 1;
+      const endItem = Math.min(this.historyPage * this.historyPageSize, totalSessions);
+      paginationInfo.textContent = `${startItem}-${endItem} of ${totalSessions}`;
+    }
+    
+    if (prevBtn) {
+      prevBtn.disabled = this.historyPage === 1;
+    }
+    
+    if (nextBtn) {
+      nextBtn.disabled = this.historyPage >= totalPages;
+    }
+  }
+
+  nextHistoryPage() {
+    this.historyPage++;
+    this.showHistory();
+  }
+
+  prevHistoryPage() {
+    this.historyPage--;
+    this.showHistory();
+  }
+
+  changeHistoryPageSize(size) {
+    this.historyPageSize = parseInt(size);
+    this.historyPage = 1; // Reset to first page
+    this.showHistory();
+  }
+
+  applyHistoryDateFilter(fromDate, toDate) {
+    this.historyFilters.dateFrom = fromDate;
+    this.historyFilters.dateTo = toDate;
+    this.historyPage = 1; // Reset to first page
+    this.showHistory();
+  }
+
+  applyHistoryStatusFilter(status) {
+    this.historyFilters.status = status;
+    this.historyPage = 1; // Reset to first page
+    this.showHistory();
   }
 
   createHistoryItem(summary) {
@@ -286,13 +418,13 @@ class UIManager {
     item.innerHTML = `
       <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
         <strong>${startDate.toLocaleDateString()} ${startDate.toLocaleTimeString()}</strong>
-        <span style="color: var(--primary); font-weight: 700;">$${totalSales.toFixed(2)}</span>
+        <span style="color: var(--primary); font-weight: 700;">KES ${totalSales.toFixed(2)}</span>
       </div>
       <div style="font-size: 0.875rem; color: var(--text-secondary);">
         ${tabCount} customer${tabCount !== 1 ? 's' : ''} • 
         ${itemCount} item${itemCount !== 1 ? 's' : ''} • 
         ${completedTabs} completed
-        ${totalDiscounts > 0 ? `• Discounts: $${totalDiscounts.toFixed(2)}` : ''}
+        ${totalDiscounts > 0 ? `• Discounts: KES ${totalDiscounts.toFixed(2)}` : ''}
       </div>
       <div style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 0.25rem;">
         Status: <span style="color: ${session.status === 'completed' ? 'var(--success)' : 'var(--warning)'}">

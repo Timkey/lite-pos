@@ -269,6 +269,52 @@
                 <button class="modal-close" id="history-close">×</button>
             </div>
             <div class="modal-body">
+                <!-- Filters -->
+                <div class="history-filters">
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label for="filter-status">Status:</label>
+                            <select id="filter-status" class="filter-select">
+                                <option value="all">All</option>
+                                <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
+                                <option value="active">Active</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label for="filter-date-from">From:</label>
+                            <input type="date" id="filter-date-from" class="filter-input">
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label for="filter-date-to">To:</label>
+                            <input type="date" id="filter-date-to" class="filter-input">
+                        </div>
+                        
+                        <button id="btn-apply-filters" class="btn-secondary btn-sm">Apply</button>
+                        <button id="btn-clear-filters" class="btn-text btn-sm">Clear</button>
+                    </div>
+                    
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label for="page-size">Per page:</label>
+                            <select id="page-size" class="filter-select">
+                                <option value="5">5</option>
+                                <option value="10" selected>10</option>
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                            </select>
+                        </div>
+                        
+                        <div class="pagination-controls">
+                            <button id="history-prev-page" class="btn-secondary btn-sm">‹ Prev</button>
+                            <span id="history-pagination-info" class="pagination-info">1-10 of 50</span>
+                            <button id="history-next-page" class="btn-secondary btn-sm">Next ›</button>
+                        </div>
+                    </div>
+                </div>
+                
                 <div id="history-list" class="history-list">
                     <!-- Session history will be loaded here -->
                 </div>
