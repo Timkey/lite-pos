@@ -1,0 +1,31 @@
+services:
+  capacitor-dev:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: shop-tracker-capacitor
+    volumes:
+      # Mount the project directory
+      - type: bind
+        source: ..
+        target: /workspace
+      # Persist node_modules
+      - node_modules:/workspace/node_modules
+      # Persist Gradle cache
+      - gradle_cache:/root/.gradle
+    working_dir: /workspace
+    ports:
+      - "8080:8080"   # HTTP server
+      - "3000:3000"   # Alternative dev server
+      - "5173:5173"   # Vite dev server
+      - "8100:8100"   # Ionic/Capacitor live reload
+    environment:
+      - ANDROID_HOME=/opt/android-sdk
+      - JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+    stdin_open: true
+    tty: true
+    command: bash
+
+volumes:
+  node_modules:
+  gradle_cache:

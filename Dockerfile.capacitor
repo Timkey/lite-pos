@@ -1,0 +1,43 @@
+# Capacitor Development Container
+FROM node:20-slim
+
+# Install dependencies for Android development
+RUN apt-get update && apt-get install -y \
+    openjdk-17-jdk \
+    gradle \
+    wget \
+    unzip \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set up Android SDK
+ENV ANDROID_HOME=/opt/android-sdk
+ENV PATH=${PATH}:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools
+
+RUN mkdir -p ${ANDROID_HOME}/cmdline-tools && \
+    wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O /tmp/cmdtools.zip && \
+    unzip -q /tmp/cmdtools.zip -d ${ANDROID_HOME}/cmdline-tools && \
+    mv ${ANDROID_HOME}/cmdline-tools/cmdline-tools ${ANDROID_HOME}/cmdline-tools/latest && \
+    rm /tmp/cmdtools.zip
+
+# Accept Android licenses
+RUN yes | sdkmanager --licenses || true
+
+# Install Android SDK packages
+RUN sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.0"
+
+# Install Capacitor CLI globally
+RUN npm install -g @capacitor/cli @capacitor/core
+
+# Set working directory
+WORKDIR /workspace
+
+# Copy the build preparation script
+COPY prepare-build.sh /usr/local/bin/prepare-build.sh
+RUN chmod +x /usr/local/bin/prepare-build.sh
+
+# Expose ports for development server and live reload
+EXPOSE 8080 3000 5173 8100
+
+# Run preparation script and keep container running
+CMD ["/bin/bash", "-c", "/usr/local/bin/prepare-build.sh && exec bash"]

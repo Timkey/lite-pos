@@ -1,0 +1,15 @@
+{
+  "appId": "com.businesstools.dashboard",
+  "appName": "Business Tools",
+  "webDir": "capacitor-build",
+  "bundledWebRuntime": false,
+  "server": {
+    "cleartext": true
+  },
+  "android": {
+    "buildOptions": {
+      "keystorePath": "",
+      "keystoreAlias": ""
+    }
+  }
+}

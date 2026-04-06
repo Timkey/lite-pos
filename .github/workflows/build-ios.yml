@@ -1,0 +1,111 @@
+name: Build iOS App
+
+on:
+  push:
+    branches: [ capacitor-build-test, main ]
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Prepare build directory
+        run: |
+          mkdir -p capacitor-build
+          cp index.html capacitor-build/
+          cp -r shop-tracker capacitor-build/
+          rm -f capacitor-build/shop-tracker/*.md
+      
+      - name: Sync Capacitor iOS
+        run: npx cap sync ios
+      
+      - name: Install CocoaPods dependencies
+        run: |
+          cd ios/App
+          pod install
+      
+      - name: Build iOS App (unsigned)
+        run: |
+          cd ios/App
+          xcodebuild clean build \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            -allowProvisioningUpdates
+      
+      - name: Create Archive
+        run: |
+          cd ios/App
+          xcodebuild archive \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -archivePath ./build/App.xcarchive \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+      
+      - name: Export IPA
+        run: |
+          cd ios/App
+          mkdir -p ./build
+          xcodebuild -exportArchive \
+            -archivePath ./build/App.xcarchive \
+            -exportPath ./build \
+            -exportOptionsPlist ../../scripts/ExportOptions.plist || true
+      
+      - name: Copy IPA to builds folder
+        run: |
+          mkdir -p builds
+          find ios/App/build -name "*.ipa" -exec cp {} builds/business-tools-dashboard.ipa \; || true
+      
+      - name: Upload IPA as artifact
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: ios-app
+          path: |
+            builds/business-tools-dashboard.ipa
+            ios/App/build/**/*.ipa
+          retention-days: 30
+      
+      - name: Commit and push IPA to repository
+        if: success()
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add builds/business-tools-dashboard.ipa || true
+          git diff --quiet && git diff --staged --quiet || git commit -m "🍎 Auto-build: Update iOS app [skip ci]"
+          git push || echo "Nothing to push or push failed"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Build summary
+        if: always()
+        run: |
+          echo "## iOS Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f "builds/business-tools-dashboard.ipa" ]; then
+            echo "✅ IPA built successfully" >> $GITHUB_STEP_SUMMARY
+            echo "📦 Size: $(du -h builds/business-tools-dashboard.ipa | cut -f1)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ IPA build failed" >> $GITHUB_STEP_SUMMARY
+          fi

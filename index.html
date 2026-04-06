@@ -206,12 +206,64 @@
             opacity: 1;
         }
     </style>
+    
+    <script>
+        // Check if mobile app files exist and show download buttons
+        async function checkAPKAvailability() {
+            let hasDownloads = false;
+            
+            // Check Android APK
+            try {
+                const apkResponse = await fetch('builds/business-tools-dashboard.apk', { method: 'HEAD' });
+                if (apkResponse.ok) {
+                    hasDownloads = true;
+                }
+            } catch (e) {}
+            
+            // Check iOS IPA
+            try {
+                const ipaResponse = await fetch('builds/business-tools-dashboard.ipa', { method: 'HEAD' });
+                if (ipaResponse.ok) {
+                    const iosBtn = document.getElementById('ios-download');
+                    if (iosBtn) {
+                        iosBtn.style.display = 'inline-block';
+                        hasDownloads = true;
+                    }
+                }
+            } catch (e) {}
+            
+            if (hasDownloads) {
+                const downloadSection = document.getElementById('download-section');
+                if (downloadSection) {
+                    downloadSection.style.display = 'block';
+                }
+            }
+        }
+        
+        window.addEventListener('DOMContentLoaded', checkAPKAvailability);
+    </script>
 </head>
 <body>
     <header class="header">
         <h1>Business Tools Dashboard</h1>
         <p>Select an application to get started</p>
     </header>
+    
+    <!-- Download Section for Mobile App -->
+    <div id="download-section" style="display: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem; text-align: center; color: white;">
+        <div style="max-width: 1200px; margin: 0 auto;">
+            <h2 style="margin: 0 0 0.5rem 0; font-size: 1.25rem;">📱 Download Mobile Apps</h2>
+            <p style="margin: 0 0 1rem 0; opacity: 0.9; font-size: 0.875rem;">Install the native apps for the best experience</p>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <a href="builds/business-tools-dashboard.apk" id="android-download" download style="display: inline-block; background: white; color: #667eea; padding: 0.75rem 2rem; border-radius: 9999px; text-decoration: none; font-weight: 700; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    🤖 Android APK
+                </a>
+                <a href="builds/business-tools-dashboard.ipa" id="ios-download" download style="display: none; background: white; color: #764ba2; padding: 0.75rem 2rem; border-radius: 9999px; text-decoration: none; font-weight: 700; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    🍎 iOS IPA
+                </a>
+            </div>
+        </div>
+    </div>
 
     <main class="container">
         <div class="apps-grid">
