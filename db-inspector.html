@@ -38,6 +38,39 @@
         button.danger:hover { background: #c62828; }
         button.success { background: #388e3c; }
         button.success:hover { background: #2e7d32; }
+        select {
+            padding: 0.75rem 1rem;
+            margin: 0.5rem 0.5rem 0.5rem 0;
+            background: #2a2a2a;
+            color: #e0e0e0;
+            border: 1px solid #4fc3f7;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            min-width: 200px;
+        }
+        select:hover {
+            border-color: #81c784;
+            background: #333;
+        }
+        select:focus {
+            outline: none;
+            border-color: #81c784;
+            box-shadow: 0 0 0 2px rgba(129, 199, 132, 0.2);
+        }
+        .action-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0.5rem 0;
+            flex-wrap: wrap;
+        }
+        .action-group label {
+            color: #4fc3f7;
+            font-weight: 600;
+            min-width: 80px;
+        }
         pre {
             background: #1a1a1a;
             padding: 1rem;
@@ -68,19 +101,100 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 1rem;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            display: block;
+        }
+        thead {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }
+        tbody {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
         }
         th, td {
             padding: 0.75rem;
             text-align: left;
             border-bottom: 1px solid #404040;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         th {
             background: #1a1a1a;
             color: #4fc3f7;
             font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
         tr:hover {
             background: #333;
+        }
+        tr:nth-child(even) {
+            background: #252525;
+        }
+        tr:nth-child(even):hover {
+            background: #333;
+        }
+        td {
+            max-width: 200px;
+            cursor: help;
+        }
+        td:hover {
+            overflow: visible;
+            white-space: normal;
+            word-break: break-all;
+            position: relative;
+            z-index: 5;
+        }
+        /* Specific column widths for better layout */
+        td:first-child, th:first-child {
+            max-width: 150px;
+        }
+        .table-container {
+            max-height: 500px;
+            overflow-y: auto;
+            overflow-x: auto;
+            border: 1px solid #404040;
+            border-radius: 4px;
+        }
+        .snapshot-card {
+            background: #1a1a1a;
+            border: 1px solid #404040;
+            border-radius: 4px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .snapshot-card:hover {
+            border-color: #4fc3f7;
+        }
+        .snapshot-info {
+            flex: 1;
+        }
+        .snapshot-name {
+            color: #4fc3f7;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .snapshot-meta {
+            color: #888;
+            font-size: 0.9em;
+            margin-top: 0.25rem;
+        }
+        .snapshot-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
         }
     </style>
 </head>
@@ -89,11 +203,47 @@
     
     <div class="section">
         <h2>Database Status</h2>
-        <button onclick="inspectDatabase()">Inspect Database</button>
-        <button class="success" onclick="exportAllData()">Export All Data to JSON</button>
-        <button class="success" onclick="document.getElementById('import-file').click()">Import Data from JSON</button>
-        <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importData(event)">
+        <button onclick="inspectDatabase()">🔍 Inspect Database</button>
         <div id="db-status"></div>
+        
+        <div style="margin-top: 1.5rem;">
+            <div class="action-group">
+                <label for="export-type">📤 Export:</label>
+                <select id="export-type">
+                    <option value="">-- Select Export Type --</option>
+                    <option value="all">All Data (Everything)</option>
+                    <option value="data-only">Data Only (No Audio)</option>
+                    <option value="audio-only">Audio Only</option>
+                </select>
+                <button class="success" onclick="handleExport()">Export to JSON</button>
+            </div>
+            
+            <div class="action-group">
+                <label for="import-type">📥 Import:</label>
+                <select id="import-type">
+                    <option value="">-- Select Import Type --</option>
+                    <option value="all">All Data (to Snapshot)</option>
+                    <option value="data-only">Data Only (to Snapshot)</option>
+                    <option value="audio-only">Audio Only (Direct)</option>
+                </select>
+                <button class="success" onclick="handleImport()">Choose File...</button>
+            </div>
+            <input type="file" id="import-file" accept=".json" style="display: none;" onchange="processImport(event)">
+            <p style="color: #888; font-size: 0.9em; margin-top: 0.5rem;">💡 Tip: Use "Data Only" for faster imports when audio files are large</p>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Database Snapshots Manager</h2>
+        <p style="color: #81c784; margin-bottom: 1rem;">
+            Create, manage, and swap between multiple database snapshots. The active database is always "ShopTrackerDB" - all apps read from it.
+        </p>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+            <button class="success" onclick="createSnapshot()">📸 Create Snapshot from Active DB</button>
+            <button onclick="listSnapshots()">📋 List All Snapshots</button>
+            <button class="danger" onclick="deleteSnapshot()">🗑️ Delete Snapshot</button>
+        </div>
+        <div id="snapshots-list"></div>
     </div>
 
     <div class="section">
@@ -128,6 +278,409 @@
 
     <script>
         let dbData = {};
+        const SNAPSHOTS_DB = 'ShopTrackerSnapshots';
+        const SNAPSHOTS_STORE = 'snapshots';
+
+        function handleExport() {
+            const exportType = document.getElementById('export-type').value;
+            if (!exportType) {
+                alert('Please select an export type');
+                return;
+            }
+            
+            if (Object.keys(dbData).length === 0) {
+                alert('Please inspect the database first!');
+                return;
+            }
+            
+            switch(exportType) {
+                case 'all':
+                    exportAllData();
+                    break;
+                case 'data-only':
+                    exportDataOnly();
+                    break;
+                case 'audio-only':
+                    exportAudioOnly();
+                    break;
+            }
+        }
+
+        function handleImport() {
+            const importType = document.getElementById('import-type').value;
+            if (!importType) {
+                alert('Please select an import type');
+                return;
+            }
+            
+            // Store the selected import type for use in processImport
+            document.getElementById('import-file').dataset.importType = importType;
+            document.getElementById('import-file').click();
+        }
+
+        // Snapshot management functions using IndexedDB
+        async function getSnapshotsDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(SNAPSHOTS_DB, 1);
+                
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => resolve(request.result);
+                
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains(SNAPSHOTS_STORE)) {
+                        const store = db.createObjectStore(SNAPSHOTS_STORE, { keyPath: 'name' });
+                        store.createIndex('created', 'created', { unique: false });
+                    }
+                };
+            });
+        }
+
+        async function getSnapshots() {
+            try {
+                const db = await getSnapshotsDB();
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction(SNAPSHOTS_STORE, 'readonly');
+                    const store = tx.objectStore(SNAPSHOTS_STORE);
+                    const request = store.getAll();
+                    
+                    request.onsuccess = () => {
+                        db.close();
+                        resolve(request.result);
+                    };
+                    request.onerror = () => {
+                        db.close();
+                        reject(request.error);
+                    };
+                });
+            } catch (err) {
+                console.error('Error getting snapshots:', err);
+                return [];
+            }
+        }
+
+        async function saveSnapshot(snapshot) {
+            const db = await getSnapshotsDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(SNAPSHOTS_STORE, 'readwrite');
+                const store = tx.objectStore(SNAPSHOTS_STORE);
+                const request = store.put(snapshot);
+                
+                request.onsuccess = () => {
+                    db.close();
+                    resolve();
+                };
+                request.onerror = () => {
+                    db.close();
+                    reject(request.error);
+                };
+            });
+        }
+
+        async function deleteSnapshotFromDB(name) {
+            const db = await getSnapshotsDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(SNAPSHOTS_STORE, 'readwrite');
+                const store = tx.objectStore(SNAPSHOTS_STORE);
+                const request = store.delete(name);
+                
+                request.onsuccess = () => {
+                    db.close();
+                    resolve();
+                };
+                request.onerror = () => {
+                    db.close();
+                    reject(request.error);
+                };
+            });
+        }
+
+        async function createSnapshot() {
+            const name = prompt('Enter a name for this snapshot:');
+            if (!name) return;
+
+            if (Object.keys(dbData).length === 0) {
+                alert('Please inspect the database first!');
+                return;
+            }
+
+            const snapshots = await getSnapshots();
+            
+            // Check for duplicate name
+            if (snapshots.find(s => s.name === name)) {
+                if (!confirm('A snapshot with this name already exists. Overwrite?')) {
+                    return;
+                }
+                // Remove old snapshot
+                await deleteSnapshotFromDB(name);
+            }
+
+            const statusEl = document.getElementById('snapshots-list');
+            statusEl.innerHTML = '<div class="status warning">Creating snapshot... This may take a moment for large datasets.</div>';
+
+            // Convert blobs to base64
+            const snapshotData = {};
+            for (const [storeName, records] of Object.entries(dbData)) {
+                snapshotData[storeName] = records.map(record => ({ ...record }));
+            }
+
+            // Convert Blobs to base64 asynchronously
+            const promises = Object.entries(dbData).flatMap(([storeName, records]) => 
+                records.flatMap((record, recordIndex) =>
+                    Object.entries(record)
+                        .filter(([key, value]) => value instanceof Blob)
+                        .map(([key, blob]) => 
+                            new Promise((resolve) => {
+                                const reader = new FileReader();
+                                reader.onload = () => {
+                                    snapshotData[storeName][recordIndex][key] = {
+                                        _blobData: reader.result.split(',')[1],
+                                        _blobType: blob.type
+                                    };
+                                    resolve();
+                                };
+                                reader.readAsDataURL(blob);
+                            })
+                        )
+                )
+            );
+
+            await Promise.all(promises);
+
+            const snapshot = {
+                name,
+                created: new Date().toISOString(),
+                data: snapshotData,
+                recordCounts: Object.fromEntries(
+                    Object.entries(dbData).map(([store, records]) => [store, records.length])
+                )
+            };
+
+            await saveSnapshot(snapshot);
+
+            alert(`Snapshot "${name}" created successfully!`);
+            listSnapshots();
+        }
+
+        async function listSnapshots() {
+            const snapshots = await getSnapshots();
+            const container = document.getElementById('snapshots-list');
+
+            if (snapshots.length === 0) {
+                container.innerHTML = '<p style="color: #ffcc80;">No snapshots found. Create one from the active database.</p>';
+                return;
+            }
+
+            let html = `<p><strong>${snapshots.length} snapshot(s) available</strong> (stored in IndexedDB)</p>`;
+            
+            snapshots.forEach((snapshot, index) => {
+                const date = new Date(snapshot.created).toLocaleString();
+                const counts = Object.entries(snapshot.recordCounts)
+                    .map(([store, count]) => `${store}: ${count}`)
+                    .join(', ');
+                
+                html += `
+                    <div class="snapshot-card">
+                        <div class="snapshot-info">
+                            <div class="snapshot-name">📸 ${snapshot.name}</div>
+                            <div class="snapshot-meta">Created: ${date}</div>
+                            <div class="snapshot-meta">Records: ${counts}</div>
+                        </div>
+                        <div class="snapshot-actions">
+                            <button class="btn-small success" onclick="swapToSnapshot('${snapshot.name}')">🔄 Swap to This</button>
+                            <button class="btn-small" onclick="exportSnapshot('${snapshot.name}')">💾 Export</button>
+                            <button class="btn-small danger" onclick="deleteSnapshotByName('${snapshot.name}')">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        async function swapToSnapshot(snapshotName) {
+            const snapshots = await getSnapshots();
+            const snapshot = snapshots.find(s => s.name === snapshotName);
+            
+            if (!snapshot) {
+                alert('Snapshot not found!');
+                return;
+            }
+
+            const confirmed = confirm(
+                `Swap active database to "${snapshotName}"?\n\n` +
+                `⚠️ Current active database will be REPLACED!\n\n` +
+                `Tip: Create a snapshot of current database first to save it.`
+            );
+
+            if (!confirmed) return;
+
+            try {
+                // Delete current active database
+                await new Promise((resolve, reject) => {
+                    const deleteReq = indexedDB.deleteDatabase('ShopTrackerDB');
+                    deleteReq.onsuccess = () => resolve();
+                    deleteReq.onerror = () => reject(deleteReq.error);
+                });
+
+                console.log('Active database deleted');
+
+                // Import snapshot data as new active database
+                const db = await new Promise((resolve, reject) => {
+                    const request = indexedDB.open('ShopTrackerDB', 2);
+                    
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        
+                        // Create all stores
+                        if (!db.objectStoreNames.contains('sessions')) {
+                            const sessionsStore = db.createObjectStore('sessions', { keyPath: 'sessionId' });
+                            sessionsStore.createIndex('startTime', 'startTime', { unique: false });
+                            sessionsStore.createIndex('status', 'status', { unique: false });
+                        }
+                        if (!db.objectStoreNames.contains('tabs')) {
+                            const tabsStore = db.createObjectStore('tabs', { keyPath: 'tabId' });
+                            tabsStore.createIndex('sessionId', 'sessionId', { unique: false });
+                            tabsStore.createIndex('status', 'status', { unique: false });
+                        }
+                        if (!db.objectStoreNames.contains('lineItems')) {
+                            const itemsStore = db.createObjectStore('lineItems', { keyPath: 'itemId' });
+                            itemsStore.createIndex('tabId', 'tabId', { unique: false });
+                            itemsStore.createIndex('timestamp', 'timestamp', { unique: false });
+                        }
+                        if (!db.objectStoreNames.contains('audioChunks')) {
+                            const audioStore = db.createObjectStore('audioChunks', { keyPath: 'chunkId' });
+                            audioStore.createIndex('sessionId', 'sessionId', { unique: false });
+                            audioStore.createIndex('timestamp', 'timestamp', { unique: false });
+                        }
+                        if (!db.objectStoreNames.contains('products')) {
+                            const productsStore = db.createObjectStore('products', { keyPath: 'productId' });
+                            productsStore.createIndex('name', 'name', { unique: false });
+                            productsStore.createIndex('unitPrice', 'unitPrice', { unique: false });
+                        }
+                        if (!db.objectStoreNames.contains('events')) {
+                            const eventsStore = db.createObjectStore('events', { keyPath: 'eventId' });
+                            eventsStore.createIndex('sessionId', 'sessionId', { unique: false });
+                            eventsStore.createIndex('tabId', 'tabId', { unique: false });
+                            eventsStore.createIndex('eventType', 'eventType', { unique: false });
+                            eventsStore.createIndex('timestamp', 'timestamp', { unique: false });
+                        }
+                    };
+                });
+
+                // Import snapshot data into stores
+                let importCount = 0;
+                for (const [storeName, records] of Object.entries(snapshot.data)) {
+                    if (!db.objectStoreNames.contains(storeName)) continue;
+
+                    const tx = db.transaction(storeName, 'readwrite');
+                    const store = tx.objectStore(storeName);
+
+                    for (const record of records) {
+                        // Convert base64 back to Blob
+                        const processedRecord = { ...record };
+                        for (const [key, value] of Object.entries(processedRecord)) {
+                            if (value && typeof value === 'object' && value._blobData) {
+                                const byteCharacters = atob(value._blobData);
+                                const byteNumbers = new Array(byteCharacters.length);
+                                for (let i = 0; i < byteCharacters.length; i++) {
+                                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                                }
+                                const byteArray = new Uint8Array(byteNumbers);
+                                processedRecord[key] = new Blob([byteArray], { type: value._blobType || 'audio/webm' });
+                            }
+                        }
+
+                        await new Promise((resolve, reject) => {
+                            const request = store.put(processedRecord);
+                            request.onsuccess = () => resolve();
+                            request.onerror = () => reject(request.error);
+                        });
+                        importCount++;
+                    }
+
+                    await new Promise((resolve, reject) => {
+                        tx.oncomplete = () => resolve();
+                        tx.onerror = () => reject(tx.error);
+                    });
+                }
+
+                db.close();
+
+                alert(`✅ Swapped to "${snapshotName}"!\n\n${importCount} records imported.\n\nAll apps now use this database.`);
+                
+                // Re-inspect to show new active database
+                setTimeout(inspectDatabase, 500);
+
+            } catch (err) {
+                console.error('Swap error:', err);
+                alert(`Failed to swap database: ${err.message}`);
+            }
+        }
+
+        async function exportSnapshot(snapshotName) {
+            const snapshots = await getSnapshots();
+            const snapshot = snapshots.find(s => s.name === snapshotName);
+            
+            if (!snapshot) {
+                alert('Snapshot not found!');
+                return;
+            }
+
+            const exportData = {
+                exportDate: new Date().toISOString(),
+                database: 'ShopTrackerDB',
+                snapshotName: snapshot.name,
+                snapshotCreated: snapshot.created,
+                data: snapshot.data
+            };
+
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `snapshot-${snapshotName}-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            alert(`Snapshot "${snapshotName}" exported!`);
+        }
+
+        async function deleteSnapshotByName(snapshotName) {
+            if (!confirm(`Delete snapshot "${snapshotName}"?\n\nThis cannot be undone!`)) {
+                return;
+            }
+
+            await deleteSnapshotFromDB(snapshotName);
+
+            alert(`Snapshot "${snapshotName}" deleted.`);
+            listSnapshots();
+        }
+
+        async function deleteSnapshot() {
+            const snapshots = await getSnapshots();
+            if (snapshots.length === 0) {
+                alert('No snapshots to delete!');
+                return;
+            }
+
+            const names = snapshots.map(s => s.name).join('\n');
+            const name = prompt(`Enter snapshot name to delete:\n\n${names}`);
+            
+            if (name) {
+                deleteSnapshotByName(name);
+            }
+        }
+
+        // Initialize snapshot list on load
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                inspectDatabase();
+                listSnapshots();
+            }, 500);
+        });
 
         async function inspectDatabase() {
             const statusEl = document.getElementById('db-status');
@@ -230,29 +783,42 @@
             const records = data.slice(0, 10);
             const keys = Object.keys(records[0]);
             
-            let html = `<p><strong>Found ${data.length} record(s)</strong> (showing first 10)</p>`;
-            html += '<table><tr>';
+            let html = `<p><strong>Found ${data.length} record(s)</strong> (showing first 10) - <em>Hover over cells to see full content</em></p>`;
+            html += '<div class="table-container"><table><thead><tr>';
             
             keys.forEach(key => {
-                html += `<th>${key}</th>`;
+                html += `<th title="${key}">${key}</th>`;
             });
-            html += '</tr>';
+            html += '</tr></thead><tbody>';
 
             records.forEach(record => {
                 html += '<tr>';
                 keys.forEach(key => {
                     let value = record[key];
-                    if (typeof value === 'object') {
-                        value = JSON.stringify(value).substring(0, 50) + '...';
+                    let displayValue = value;
+                    
+                    if (value instanceof Blob) {
+                        displayValue = `[Blob: ${(value.size / 1024).toFixed(2)} KB]`;
+                    } else if (typeof value === 'object' && value !== null) {
+                        displayValue = JSON.stringify(value);
                     } else if (typeof value === 'string' && value.length > 50) {
-                        value = value.substring(0, 50) + '...';
+                        displayValue = value.substring(0, 50) + '...';
                     }
-                    html += `<td>${value}</td>`;
+                    
+                    // Add title attribute with full value for tooltip
+                    let fullValue = value;
+                    if (value instanceof Blob) {
+                        fullValue = `Blob: ${value.size} bytes, type: ${value.type}`;
+                    } else if (typeof value === 'object' && value !== null) {
+                        fullValue = JSON.stringify(value, null, 2);
+                    }
+                    
+                    html += `<td title="${String(fullValue).replace(/"/g, '&quot;')}">${displayValue}</td>`;
                 });
                 html += '</tr>';
             });
 
-            html += '</table>';
+            html += '</tbody></table></div>';
             container.innerHTML = html;
         }
 
@@ -262,33 +828,92 @@
                 return;
             }
 
+            // Convert Blobs to base64 for JSON serialization
             const exportData = {
                 exportDate: new Date().toISOString(),
                 database: 'ShopTrackerDB',
-                data: dbData
+                data: {}
             };
 
-            // Show in page
-            document.getElementById('raw-export').textContent = JSON.stringify(exportData, null, 2);
+            // Process each store
+            for (const [storeName, records] of Object.entries(dbData)) {
+                exportData.data[storeName] = records.map(record => {
+                    const processedRecord = { ...record };
+                    
+                    // Convert Blob objects to base64
+                    for (const [key, value] of Object.entries(processedRecord)) {
+                        if (value instanceof Blob) {
+                            console.log(`Converting Blob in ${storeName}.${key} (${value.size} bytes)`);
+                            // Mark for async conversion
+                            processedRecord[`${key}_blob_type`] = value.type;
+                            processedRecord[`${key}_blob_size`] = value.size;
+                        }
+                    }
+                    
+                    return processedRecord;
+                });
+            }
 
-            // Download as file
-            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `shoptracker-backup-${Date.now()}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
+            // Convert blobs to base64 asynchronously
+            Promise.all(
+                Object.entries(dbData).flatMap(([storeName, records]) => 
+                    records.flatMap((record, recordIndex) =>
+                        Object.entries(record)
+                            .filter(([key, value]) => value instanceof Blob)
+                            .map(([key, blob]) => 
+                                new Promise((resolve) => {
+                                    const reader = new FileReader();
+                                    reader.onload = () => {
+                                        exportData.data[storeName][recordIndex][key] = {
+                                            _blobData: reader.result.split(',')[1], // base64 data
+                                            _blobType: blob.type
+                                        };
+                                        resolve();
+                                    };
+                                    reader.readAsDataURL(blob);
+                                })
+                            )
+                    )
+                )
+            ).then(() => {
+                // Show in page
+                document.getElementById('raw-export').textContent = JSON.stringify(exportData, null, 2);
 
-            alert('Data exported! Check downloads folder.');
+                // Download as file
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `shoptracker-backup-${Date.now()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+
+                alert('Data exported with audio! Check downloads folder.');
+            });
         }
 
         // Auto-inspect on load
-        window.addEventListener('DOMContentLoaded', () => {
-            setTimeout(inspectDatabase, 500);
-        });
-
-        async function importData(event) {
+        // (Removed - now called in DOMContentLoaded above)
+        
+        async function processImport(event) {
+            const importType = event.target.dataset.importType;
+            
+            switch(importType) {
+                case 'all':
+                    await importAllData(event);
+                    break;
+                case 'data-only':
+                    await importDataOnly(event);
+                    break;
+                case 'audio-only':
+                    await importAudioOnly(event);
+                    break;
+                default:
+                    alert('Invalid import type');
+            }
+        }
+        
+        async function importAllData(event) {
             const file = event.target.files[0];
             if (!file) return;
 
@@ -301,10 +926,290 @@
                     return;
                 }
 
+                // Ask for snapshot name
+                const snapshotName = prompt(
+                    `Import data as a new snapshot?\n\n` +
+                    `Enter a name for this snapshot:\n` +
+                    `(Data will be imported to snapshot, not directly to active database)`
+                );
+
+                if (!snapshotName) return;
+
+                const snapshots = await getSnapshots();
+                
+                // Check for duplicate name
+                if (snapshots.find(s => s.name === snapshotName)) {
+                    if (!confirm('A snapshot with this name already exists. Overwrite?')) {
+                        return;
+                    }
+                    await deleteSnapshotFromDB(snapshotName);
+                }
+
+                // Create snapshot from imported data
+                const snapshot = {
+                    name: snapshotName,
+                    created: new Date().toISOString(),
+                    data: importedData.data,
+                    recordCounts: {}
+                };
+
+                // Calculate record counts
+                for (const [storeName, records] of Object.entries(importedData.data)) {
+                    snapshot.recordCounts[storeName] = records.length;
+                }
+
+                await saveSnapshot(snapshot);
+
+                const totalRecords = Object.values(snapshot.recordCounts).reduce((a, b) => a + b, 0);
+                
+                const activateNow = confirm(
+                    `✅ Imported to snapshot "${snapshotName}"!\n\n` +
+                    `Total records: ${totalRecords}\n` +
+                    `Stores: ${Object.keys(importedData.data).join(', ')}\n\n` +
+                    `Activate this snapshot now?\n` +
+                    `(This will replace the current active database)`
+                );
+
+                await listSnapshots();
+
+                if (activateNow) {
+                    await swapToSnapshot(snapshotName);
+                }
+
+            } catch (err) {
+                console.error('Import error:', err);
+                alert(`Import failed: ${err.message}`);
+            }
+        }
+
+        async function importDataOnly(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            try {
+                const text = await file.text();
+                const importedData = JSON.parse(text);
+
+                if (!importedData.data) {
+                    alert('Invalid backup file format!');
+                    return;
+                }
+
+                // Check if file contains audioChunks
+                if (importedData.data.audioChunks) {
+                    const audioCount = importedData.data.audioChunks.length;
+                    const proceed = confirm(
+                        `⚠️ This file contains ${audioCount} audio chunk(s).\n\n` +
+                        `You selected "Data Only" import which will skip audio.\n\n` +
+                        `Continue without importing audio?`
+                    );
+                    if (!proceed) return;
+                    
+                    // Remove audioChunks from import
+                    delete importedData.data.audioChunks;
+                }
+
+                if (Object.keys(importedData.data).length === 0) {
+                    alert('No data to import after excluding audio!');
+                    return;
+                }
+
+                // Ask for snapshot name
+                const snapshotName = prompt(
+                    `Import data as a new snapshot (no audio)?\n\n` +
+                    `Enter a name for this snapshot:\n` +
+                    `(Audio can be imported separately later)`
+                );
+
+                if (!snapshotName) return;
+
+                const snapshots = await getSnapshots();
+                
+                // Check for duplicate name
+                if (snapshots.find(s => s.name === snapshotName)) {
+                    if (!confirm('A snapshot with this name already exists. Overwrite?')) {
+                        return;
+                    }
+                    await deleteSnapshotFromDB(snapshotName);
+                }
+
+                // Create snapshot from imported data
+                const snapshot = {
+                    name: snapshotName,
+                    created: new Date().toISOString(),
+                    data: importedData.data,
+                    recordCounts: {}
+                };
+
+                // Calculate record counts
+                for (const [storeName, records] of Object.entries(importedData.data)) {
+                    snapshot.recordCounts[storeName] = records.length;
+                }
+
+                await saveSnapshot(snapshot);
+
+                const totalRecords = Object.values(snapshot.recordCounts).reduce((a, b) => a + b, 0);
+                const stores = Object.keys(importedData.data).join(', ');
+                
+                const activateNow = confirm(
+                    `✅ Imported to snapshot "${snapshotName}" (no audio)!\n\n` +
+                    `Total records: ${totalRecords}\n` +
+                    `Stores: ${stores}\n\n` +
+                    `Activate this snapshot now?\n` +
+                    `(This will replace the current active database)`
+                );
+
+                await listSnapshots();
+
+                if (activateNow) {
+                    await swapToSnapshot(snapshotName);
+                }
+
+            } catch (err) {
+                console.error('Import error:', err);
+                alert(`Import failed: ${err.message}`);
+            }
+        }
+
+        function exportDataOnly() {
+            if (Object.keys(dbData).length === 0) {
+                alert('No data found! Please inspect the database first.');
+                return;
+            }
+
+            const exportData = {
+                exportDate: new Date().toISOString(),
+                database: 'ShopTrackerDB',
+                type: 'data-only',
+                data: {}
+            };
+
+            // Export all stores EXCEPT audioChunks
+            const storesToExport = Object.keys(dbData).filter(store => store !== 'audioChunks');
+            
+            for (const storeName of storesToExport) {
+                const records = dbData[storeName];
+                exportData.data[storeName] = records.map(record => {
+                    const processedRecord = { ...record };
+                    
+                    // Convert any Blob objects to base64 (if any exist in non-audio stores)
+                    for (const [key, value] of Object.entries(processedRecord)) {
+                        if (value instanceof Blob) {
+                            console.log(`Converting Blob in ${storeName}.${key} (${value.size} bytes)`);
+                            processedRecord[`${key}_blob_type`] = value.type;
+                            processedRecord[`${key}_blob_size`] = value.size;
+                        }
+                    }
+                    
+                    return processedRecord;
+                });
+            }
+
+            // Convert blobs to base64 asynchronously (if any exist)
+            const blobPromises = Object.entries(dbData)
+                .filter(([storeName]) => storeName !== 'audioChunks')
+                .flatMap(([storeName, records]) => 
+                    records.flatMap((record, recordIndex) =>
+                        Object.entries(record)
+                            .filter(([key, value]) => value instanceof Blob)
+                            .map(([key, blob]) => 
+                                new Promise((resolve) => {
+                                    const reader = new FileReader();
+                                    reader.onload = () => {
+                                        exportData.data[storeName][recordIndex][key] = {
+                                            _blobData: reader.result.split(',')[1],
+                                            _blobType: blob.type
+                                        };
+                                        resolve();
+                                    };
+                                    reader.readAsDataURL(blob);
+                                })
+                            )
+                    )
+                );
+
+            Promise.all(blobPromises).then(() => {
+                // Show in page
+                document.getElementById('raw-export').textContent = JSON.stringify(exportData, null, 2);
+
+                // Download as file
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `shoptracker-data-only-${Date.now()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+
+                const totalRecords = Object.values(exportData.data).reduce((sum, arr) => sum + arr.length, 0);
+                alert(`Data exported (no audio)!\n\nStores: ${storesToExport.join(', ')}\nTotal records: ${totalRecords}\n\nCheck downloads folder.`);
+            });
+        }
+
+        function exportAudioOnly() {
+            if (!dbData.audioChunks || dbData.audioChunks.length === 0) {
+                alert('No audio chunks found! Please inspect the database first.');
+                return;
+            }
+
+            const exportData = {
+                exportDate: new Date().toISOString(),
+                database: 'ShopTrackerDB',
+                type: 'audio-only',
+                data: { audioChunks: [] }
+            };
+
+            // Convert Blobs to base64 for audio chunks
+            const promises = dbData.audioChunks.map((record, recordIndex) => {
+                exportData.data.audioChunks[recordIndex] = { ...record };
+                
+                return Object.entries(record)
+                    .filter(([key, value]) => value instanceof Blob)
+                    .map(([key, blob]) => 
+                        new Promise((resolve) => {
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                                exportData.data.audioChunks[recordIndex][key] = {
+                                    _blobData: reader.result.split(',')[1],
+                                    _blobType: blob.type
+                                };
+                                resolve();
+                            };
+                            reader.readAsDataURL(blob);
+                        })
+                    );
+            }).flat();
+
+            Promise.all(promises).then(() => {
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `shoptracker-audio-only-${Date.now()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+
+                alert(`Exported ${dbData.audioChunks.length} audio chunks! Check downloads folder.`);
+            });
+        }
+
+        async function importAudioOnly(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            try {
+                const text = await file.text();
+                const importedData = JSON.parse(text);
+
+                if (!importedData.data || !importedData.data.audioChunks) {
+                    alert('Invalid audio backup file format!');
+                    return;
+                }
+
+                const audioCount = importedData.data.audioChunks.length;
                 const confirmed = confirm(
-                    `Import ${Object.keys(importedData.data).length} stores from backup?\n\n` +
-                    `This will ADD data to the database (not replace existing data).\n\n` +
-                    `Stores to import:\n${Object.keys(importedData.data).join(', ')}`
+                    `Import ${audioCount} audio chunk(s)?\n\n` +
+                    `This will ADD audio chunks without modifying existing data.`
                 );
 
                 if (!confirmed) return;
@@ -317,93 +1222,70 @@
                     request.onerror = () => reject(request.error);
                     request.onupgradeneeded = (event) => {
                         const db = event.target.result;
-                        
-                        // Create stores if they don't exist
-                        if (!db.objectStoreNames.contains('sessions')) {
-                            const sessionsStore = db.createObjectStore('sessions', { keyPath: 'sessionId' });
-                            sessionsStore.createIndex('startTime', 'startTime', { unique: false });
-                            sessionsStore.createIndex('status', 'status', { unique: false });
-                        }
-                        if (!db.objectStoreNames.contains('tabs')) {
-                            const tabsStore = db.createObjectStore('tabs', { keyPath: 'tabId' });
-                            tabsStore.createIndex('sessionId', 'sessionId', { unique: false });
-                            tabsStore.createIndex('status', 'status', { unique: false });
-                        }
-                        if (!db.objectStoreNames.contains('lineItems')) {
-                            const itemsStore = db.createObjectStore('lineItems', { keyPath: 'itemId' });
-                            itemsStore.createIndex('tabId', 'tabId', { unique: false });
-                            itemsStore.createIndex('timestamp', 'timestamp', { unique: false });
-                        }
                         if (!db.objectStoreNames.contains('audioChunks')) {
                             const audioStore = db.createObjectStore('audioChunks', { keyPath: 'chunkId' });
                             audioStore.createIndex('sessionId', 'sessionId', { unique: false });
                             audioStore.createIndex('timestamp', 'timestamp', { unique: false });
                         }
-                        if (!db.objectStoreNames.contains('products')) {
-                            const productsStore = db.createObjectStore('products', { keyPath: 'productId' });
-                            productsStore.createIndex('name', 'name', { unique: false });
-                            productsStore.createIndex('unitPrice', 'unitPrice', { unique: false });
-                        }
-                        if (!db.objectStoreNames.contains('events')) {
-                            const eventsStore = db.createObjectStore('events', { keyPath: 'eventId' });
-                            eventsStore.createIndex('sessionId', 'sessionId', { unique: false });
-                            eventsStore.createIndex('tabId', 'tabId', { unique: false });
-                            eventsStore.createIndex('eventType', 'eventType', { unique: false });
-                            eventsStore.createIndex('timestamp', 'timestamp', { unique: false });
-                        }
-                        console.log('Database stores created during import');
                     };
                 });
+
+                if (!db.objectStoreNames.contains('audioChunks')) {
+                    alert('audioChunks store not found in database!');
+                    db.close();
+                    return;
+                }
 
                 let importCount = 0;
                 let errorCount = 0;
 
-                // Import each store's data
-                for (const [storeName, records] of Object.entries(importedData.data)) {
-                    if (!db.objectStoreNames.contains(storeName)) {
-                        console.warn(`Store ${storeName} not found, skipping`);
-                        continue;
-                    }
+                const tx = db.transaction('audioChunks', 'readwrite');
+                const store = tx.objectStore('audioChunks');
 
+                for (const record of importedData.data.audioChunks) {
                     try {
-                        const tx = db.transaction(storeName, 'readwrite');
-                        const store = tx.objectStore(storeName);
-
-                        for (const record of records) {
-                            try {
-                                await new Promise((resolve, reject) => {
-                                    const request = store.put(record); // Use put to update if exists
-                                    request.onsuccess = () => resolve();
-                                    request.onerror = () => reject(request.error);
-                                });
-                                importCount++;
-                            } catch (err) {
-                                console.error(`Error importing record to ${storeName}:`, err);
-                                errorCount++;
+                        // Convert base64 back to Blob
+                        const processedRecord = { ...record };
+                        for (const [key, value] of Object.entries(processedRecord)) {
+                            if (value && typeof value === 'object' && value._blobData) {
+                                const byteCharacters = atob(value._blobData);
+                                const byteNumbers = new Array(byteCharacters.length);
+                                for (let i = 0; i < byteCharacters.length; i++) {
+                                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                                }
+                                const byteArray = new Uint8Array(byteNumbers);
+                                processedRecord[key] = new Blob([byteArray], { type: value._blobType || 'audio/webm' });
+                                console.log(`Restored audio Blob: ${processedRecord[key].size} bytes`);
                             }
                         }
 
                         await new Promise((resolve, reject) => {
-                            tx.oncomplete = () => resolve();
-                            tx.onerror = () => reject(tx.error);
+                            const request = store.put(processedRecord);
+                            request.onsuccess = () => resolve();
+                            request.onerror = () => reject(request.error);
                         });
-
+                        importCount++;
                     } catch (err) {
-                        console.error(`Error importing ${storeName}:`, err);
+                        console.error('Error importing audio chunk:', err);
                         errorCount++;
                     }
                 }
 
+                await new Promise((resolve, reject) => {
+                    tx.oncomplete = () => resolve();
+                    tx.onerror = () => reject(tx.error);
+                });
+
                 db.close();
 
-                alert(`Import complete!\n\n✅ Imported: ${importCount} records\n❌ Errors: ${errorCount}`);
+                alert(`Audio import complete!\n\n✅ Imported: ${importCount} chunks\n❌ Errors: ${errorCount}`);
                 
                 // Re-inspect to show new data
                 setTimeout(inspectDatabase, 500);
 
             } catch (err) {
-                console.error('Import error:', err);
-                alert(`Import failed: ${err.message}`);
+                console.error('Audio import error:', err);
+                alert(`Audio import failed: ${err.message}`);
             }
         }
     </script>

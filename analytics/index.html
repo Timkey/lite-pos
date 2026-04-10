@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#6366f1">
+    <title>Analytics Dashboard - Shop Tracker</title>
+    
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>📊 Analytics Dashboard</h1>
+                <button class="btn-back" onclick="window.location.href='../index.html'">← Back to Dashboard</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Loading State -->
+            <div id="loading-state" class="loading-state">
+                <div class="spinner"></div>
+                <p>Loading analytics data...</p>
+            </div>
+
+            <!-- Error State -->
+            <div id="error-state" class="error-state" style="display: none;">
+                <div class="error-icon">⚠️</div>
+                <h2>No Data Available</h2>
+                <p id="error-message">Start using Shop Tracker to generate analytics data</p>
+                <button class="btn-primary" onclick="window.location.href='../shop-tracker/index.html'">
+                    Open Shop Tracker
+                </button>
+                <button class="btn-secondary" onclick="location.reload()" style="margin-left: 0.5rem;">
+                    Retry
+                </button>
+            </div>
+
+            <!-- Dashboard Content -->
+            <div id="dashboard-content" style="display: none;">
+                <!-- Summary Cards -->
+                <div class="summary-cards">
+                    <div class="card">
+                        <div class="card-icon">📅</div>
+                        <div class="card-content">
+                            <h3 class="card-value" id="total-sessions">0</h3>
+                            <p class="card-label">Total Sessions</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-icon">👥</div>
+                        <div class="card-content">
+                            <h3 class="card-value" id="total-customers">0</h3>
+                            <p class="card-label">Total Customers</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-icon">💰</div>
+                        <div class="card-content">
+                            <h3 class="card-value" id="total-revenue">$0</h3>
+                            <p class="card-label">Total Revenue</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-icon">📦</div>
+                        <div class="card-content">
+                            <h3 class="card-value" id="total-items">0</h3>
+                            <p class="card-label">Items Logged</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="charts-section">
+                    <!-- Session Activity -->
+                    <div class="chart-card">
+                        <h2 class="chart-title">Session Activity</h2>
+                        <div id="session-chart" class="chart-container"></div>
+                    </div>
+
+                    <!-- Revenue Trend -->
+                    <div class="chart-card">
+                        <h2 class="chart-title">Revenue Trend</h2>
+                        <div id="revenue-chart" class="chart-container"></div>
+                    </div>
+                </div>
+
+                <!-- Detailed Tables -->
+                <div class="tables-section">
+                    <!-- Recent Sessions -->
+                    <div class="table-card">
+                        <h2 class="table-title">Recent Sessions</h2>
+                        <div class="table-controls">
+                            <input type="text" id="search-sessions" class="search-input" placeholder="Search sessions...">
+                            <select id="filter-status" class="filter-select">
+                                <option value="all">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                        </div>
+                        <div class="table-wrapper">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Session ID</th>
+                                        <th>Start Time</th>
+                                        <th>Duration</th>
+                                        <th>Customers</th>
+                                        <th>Revenue</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sessions-table-body">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Top Customers -->
+                    <div class="table-card">
+                        <h2 class="table-title">Customer Activity</h2>
+                        <div class="table-wrapper">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Customer ID</th>
+                                        <th>Sessions</th>
+                                        <th>Total Spent</th>
+                                        <th>Avg Order</th>
+                                        <th>Items</th>
+                                        <th>Last Visit</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="customers-table-body">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Event Log -->
+                    <div class="table-card">
+                        <h2 class="table-title">Recent Events</h2>
+                        <div class="table-wrapper">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Event Type</th>
+                                        <th>Session</th>
+                                        <th>Tab</th>
+                                        <th>Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="events-table-body">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Export -->
+                <div class="export-section">
+                    <button class="btn-export" onclick="analytics.exportData()">
+                        📥 Export Data (JSON)
+                    </button>
+                    <button class="btn-export" onclick="analytics.refreshData()">
+                        🔄 Refresh Data
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/db-reader.js"></script>
+    <script src="js/analytics.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
