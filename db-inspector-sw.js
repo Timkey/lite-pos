@@ -1,11 +1,21 @@
 // Service Worker for DB Inspector - Offline Support
-const VERSION = '20260411-232edc2';
+const VERSION = '20260411-c062a47';
 const CACHE_NAME = `db-inspector-v${VERSION}`;
 
-const urlsToCache = [
+// Base URLs without cache busting
+const baseUrls = [
   '/db-inspector.html',
   '/db-inspector-manifest.json'
 ];
+
+// Add cache busting query parameter to all URLs
+const urlsToCache = baseUrls.map(url => {
+  // Don't add query params to HTML files (causes issues)
+  if (url.endsWith('.html')) {
+    return url;
+  }
+  return `${url}?v=${VERSION}`;
+});
 
 // Install event - cache resources
 self.addEventListener('install', event => {

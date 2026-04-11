@@ -1,6 +1,6 @@
 // Service Worker for Offline Support
 // Update this version with each deployment (use timestamp or commit hash)
-const VERSION = '20260411-232edc2'; // Format: YYYYMMDD-shortcommit or timestamp
+const VERSION = '20260411-c062a47'; // Format: YYYYMMDD-shortcommit or timestamp
 const CACHE_NAME = `shop-tracker-v${VERSION}`;
 
 // Base URLs without cache busting

@@ -1,12 +1,22 @@
 // Service Worker for Root Landing Page - Offline Support
-const VERSION = '20260411-232edc2';
+const VERSION = '20260411-c062a47';
 const CACHE_NAME = `recon-root-v${VERSION}`;
 
-const urlsToCache = [
+// Base URLs without cache busting
+const baseUrls = [
   '/',
   '/index.html',
   '/manifest.json'
 ];
+
+// Add cache busting query parameter to all URLs
+const urlsToCache = baseUrls.map(url => {
+  // Don't add query params to root or index (causes issues)
+  if (url === '/' || url.endsWith('index.html')) {
+    return url;
+  }
+  return `${url}?v=${VERSION}`;
+});
 
 // Install event - cache resources
 self.addEventListener('install', event => {

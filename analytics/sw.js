@@ -1,8 +1,9 @@
 // Service Worker for Analytics App - Offline Support
-const VERSION = '20260411-232edc2';
+const VERSION = '20260411-c062a47';
 const CACHE_NAME = `analytics-v${VERSION}`;
 
-const urlsToCache = [
+// Base URLs without cache busting
+const baseUrls = [
   '/analytics/',
   '/analytics/index.html',
   '/analytics/css/main.css',
@@ -11,6 +12,15 @@ const urlsToCache = [
   '/analytics/js/db-reader.js',
   '/analytics/manifest.json'
 ];
+
+// Add cache busting query parameter to all URLs
+const urlsToCache = baseUrls.map(url => {
+  // Don't add query params to root or index (causes issues)
+  if (url.endsWith('/') || url.endsWith('index.html')) {
+    return url;
+  }
+  return `${url}?v=${VERSION}`;
+});
 
 // Install event - cache resources
 self.addEventListener('install', event => {
