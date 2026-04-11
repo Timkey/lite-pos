@@ -1,33 +1,18 @@
-// Service Worker for Offline Support
-// Update this version with each deployment (use timestamp or commit hash)
-const VERSION = '20260411-1aa8fe9'; // Format: YYYYMMDD-shortcommit or timestamp
-const CACHE_NAME = `shop-tracker-v${VERSION}`;
+// Service Worker for Root Landing Page - Offline Support
+const VERSION = '20260411-1aa8fe9';
+const CACHE_NAME = `recon-root-v${VERSION}`;
 
 // Base URLs without cache busting - using relative paths
 const baseUrls = [
   './',
   './index.html',
-  './css/main.css',
-  './css/tabs.css',
-  './css/calculator.css',
-  './css/review.css',
-  './css/responsive.css',
-  './js/db.js',
-  './js/audio.js',
-  './js/session.js',
-  './js/tabs.js',
-  './js/calculator.js',
-  './js/cart.js',
-  './js/review.js',
-  './js/ui.js',
-  './js/app.js',
   './manifest.json'
 ];
 
 // Add cache busting query parameter to all URLs
 const urlsToCache = baseUrls.map(url => {
   // Don't add query params to root or index (causes issues)
-  if (url.endsWith('/') || url.endsWith('index.html')) {
+  if (url === '/' || url.endsWith('index.html')) {
     return url;
   }
   return `${url}?v=${VERSION}`;
@@ -35,11 +20,11 @@ const urlsToCache = baseUrls.map(url => {
 
 // Install event - cache resources
 self.addEventListener('install', event => {
-  console.log('[SW] Installing service worker...');
+  console.log('[Root SW] Installing...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('[SW] Caching app shell');
+        console.log('[Root SW] Caching app resources');
         return cache.addAll(urlsToCache);
       })
       .then(() => self.skipWaiting())
@@ -48,43 +33,36 @@ self.addEventListener('install', event => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', event => {
-  console.log('[SW] Activating service worker...');
+  console.log('[Root SW] Activating...');
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('[SW] Deleting old cache:', cacheName);
+        cacheNames
+          .filter(cacheName => cacheName.startsWith('recon-root-v') && cacheName !== CACHE_NAME)
+          .map(cacheName => {
+            console.log('[Root SW] Deleting old cache:', cacheName);
             return caches.delete(cacheName);
-          }
-        })
+          })
       );
     }).then(() => self.clients.claim())
   );
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - cache-first strategy
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
       .then(response => {
-        // Cache hit - return response
         if (response) {
           return response;
         }
 
-        // Clone the request
-        const fetchRequest = event.request.clone();
-
-        return fetch(fetchRequest).then(response => {
-          // Check if valid response
-          if (!response || response.status !== 200) {
+        return fetch(event.request).then(response => {
+          if (event.request.method !== 'GET' || !response || response.status !== 200) {
             return response;
           }
 
-          // Clone the response
           const responseToCache = response.clone();
-
           caches.open(CACHE_NAME).then(cache => {
             cache.put(event.request, responseToCache);
           });

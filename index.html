@@ -10,6 +10,7 @@
     
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="shop-tracker/assets/icon-192.svg">
+    <link rel="manifest" href="manifest.json">
     
     <style>
         :root {
@@ -280,15 +281,18 @@
                 <span class="app-status active">Active</span>
             </a>
 
-            <!-- Placeholder for future apps -->
-            <div class="app-card coming-soon">
+            <!-- Analytics Dashboard -->
+            <a href="analytics/index.html" class="app-card">
                 <div class="app-icon">📊</div>
-                <h2 class="app-title">Analytics Dashboard</h2>
+                <h2 class="app-title">
+                    Analytics Dashboard
+                    <span class="launch-icon">→</span>
+                </h2>
                 <p class="app-description">
                     Comprehensive sales analytics and reporting tools for business insights.
                 </p>
-                <span class="app-status coming-soon">Coming Soon</span>
-            </div>
+                <span class="app-status active">Active</span>
+            </a>
 
             <div class="app-card coming-soon">
                 <div class="app-icon">📦</div>
@@ -307,11 +311,33 @@
                 </p>
                 <span class="app-status coming-soon">Coming Soon</span>
             </div>
+
+            <!-- Database Inspector (Admin Tool) -->
+            <a href="db-inspector.html" class="app-card">
+                <div class="app-icon">🔧</div>
+                <h2 class="app-title">
+                    Database Inspector
+                    <span class="launch-icon">→</span>
+                </h2>
+                <p class="app-description">
+                    Technical tool for inspecting, exporting, and importing database backups.
+                </p>
+                <span class="app-status active">Admin Tool</span>
+            </a>
         </div>
     </main>
 
     <footer class="footer">
         <p>&copy; 2026 Business Tools Dashboard. All rights reserved.</p>
     </footer>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('[Root] Service Worker registered:', reg.scope))
+                .catch(err => console.error('[Root] Service Worker registration failed:', err));
+        }
+    </script>
 </body>
 </html>
