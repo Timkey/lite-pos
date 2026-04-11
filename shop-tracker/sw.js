@@ -1,27 +1,27 @@
 // Service Worker for Offline Support
 // Update this version with each deployment (use timestamp or commit hash)
-const VERSION = '20260411-c062a47'; // Format: YYYYMMDD-shortcommit or timestamp
+const VERSION = '20260411-25c743e'; // Format: YYYYMMDD-shortcommit or timestamp
 const CACHE_NAME = `shop-tracker-v${VERSION}`;
 
-// Base URLs without cache busting
+// Base URLs without cache busting - using relative paths
 const baseUrls = [
-  '/shop-tracker/',
-  '/shop-tracker/index.html',
-  '/shop-tracker/css/main.css',
-  '/shop-tracker/css/tabs.css',
-  '/shop-tracker/css/calculator.css',
-  '/shop-tracker/css/review.css',
-  '/shop-tracker/css/responsive.css',
-  '/shop-tracker/js/db.js',
-  '/shop-tracker/js/audio.js',
-  '/shop-tracker/js/session.js',
-  '/shop-tracker/js/tabs.js',
-  '/shop-tracker/js/calculator.js',
-  '/shop-tracker/js/cart.js',
-  '/shop-tracker/js/review.js',
-  '/shop-tracker/js/ui.js',
-  '/shop-tracker/js/app.js',
-  '/shop-tracker/manifest.json'
+  './',
+  './index.html',
+  './css/main.css',
+  './css/tabs.css',
+  './css/calculator.css',
+  './css/review.css',
+  './css/responsive.css',
+  './js/db.js',
+  './js/audio.js',
+  './js/session.js',
+  './js/tabs.js',
+  './js/calculator.js',
+  './js/cart.js',
+  './js/review.js',
+  './js/ui.js',
+  './js/app.js',
+  './manifest.json'
 ];
 
 // Add cache busting query parameter to all URLs
@@ -93,8 +93,8 @@ self.addEventListener('fetch', event => {
         }).catch(() => {
           // Offline fallback - return cached index for navigation requests
           if (event.request.destination === 'document') {
-            return caches.match('/shop-tracker/index.html')
-              .then(cached => cached || caches.match('/shop-tracker/'));
+            return caches.match('./index.html')
+              .then(cached => cached || caches.match('./'));
           }
           // For other requests, return a network error
           return Promise.reject('offline');
