@@ -48,6 +48,7 @@ class AnalyticsApp {
   async renderDashboard() {
     this.renderSummaryCards();
     this.renderCharts();
+    this.renderQualityAnalysis();
     this.renderSessionsTable();
     this.renderCustomersTable();
     this.renderEventsTable();
@@ -56,38 +57,77 @@ class AnalyticsApp {
   renderSummaryCards() {
     const metrics = analytics.metrics;
 
+    // Basic metrics
     document.getElementById('total-sessions').textContent = metrics.totalSessions;
     document.getElementById('total-customers').textContent = metrics.totalCustomers;
     document.getElementById('total-revenue').textContent = analytics.formatCurrency(metrics.totalRevenue);
     document.getElementById('total-items').textContent = metrics.totalItems;
+
+    // Quality metrics
+    const quality = metrics.qualityMetrics;
+    if (quality) {
+      document.getElementById('avg-authenticity').textContent = quality.avgAuthenticity;
+      const badge = analytics.getQualityBadge(parseFloat(quality.avgAuthenticity));
+      document.getElementById('quality-trend').textContent = badge.emoji + ' ' + badge.label;
+
+      document.getElementById('flagged-sessions').textContent = quality.flaggedCount;
+      const flaggedPct = quality.totalAnalyzed > 0 ? 
+        ((quality.flaggedCount / quality.totalAnalyzed) * 100).toFixed(0) : 0;
+      document.getElementById('flagged-percentage').textContent = `${flaggedPct}% of sessions`;
+
+      document.getElementById('audio-coverage').textContent = quality.audioCoverage + '%';
+      const audioLabel = parseFloat(quality.audioCoverage) >= 90 ? '🟢 Excellent' :
+                         parseFloat(quality.audioCoverage) >= 70 ? '🟡 Good' : '🔴 Needs Improvement';
+      document.getElementById('audio-subtitle').textContent = audioLabel;
+
+      const dist = quality.distribution;
+      document.getElementById('quality-distribution').textContent = 
+        `${dist.authentic} | ${dist.questionable} | ${dist.suspicious}`;
+    }
   }
 
   renderCharts() {
     this.renderSessionChart();
     this.renderRevenueChart();
+    this.renderComplexityChart();
+    this.renderHeatmapChart();
+    this.renderHourlyChart();
   }
 
   renderSessionChart() {
     const container = document.getElementById('session-chart');
     const data = analytics.metrics.sessionsByDate;
-    const entries = Object.entries(data).slice(-7); // Last 7 days
+    
+    if (!data || Object.keys(data).length === 0) {
+      container.innerHTML = '<p style="color: var(--text-secondary);">No session data available</p>';
+      return;
+    }
+
+    // Sort entries chronologically and take last 7
+    const entries = Object.entries(data)
+      .sort(([dateA], [dateB]) => new Date(dateA) - new Date(dateB))
+      .slice(-7);
 
     if (entries.length === 0) {
       container.innerHTML = '<p style="color: var(--text-secondary);">No session data available</p>';
       return;
     }
 
-    const maxValue = Math.max(...entries.map(([_, value]) => value));
+    const maxValue = Math.max(...entries.map(([_, value]) => value), 1);
 
     container.innerHTML = `
       <div class="chart-bar">
-        ${entries.map(([date, count]) => `
-          <div class="bar-item">
-            <div class="bar-value">${count}</div>
-            <div class="bar" style="height: ${(count / maxValue) * 100}%; min-height: 20px;"></div>
-            <div class="bar-label">${new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
-          </div>
-        `).join('')}
+        ${entries.map(([date, count]) => {
+          // Calculate percentage height with minimum of 8% for visibility
+          const heightPercent = Math.max((count / maxValue) * 100, 8);
+          return `
+            <div class="bar-item">
+              <div class="bar-value">${count}</div>
+              <div class="bar" style="height: ${heightPercent}%;"></div>
+              <div class="bar-label">${date}</div>
+            </div>
+          `;
+        }).join('')}
       </div>
     `;
   }
@@ -95,31 +135,332 @@ class AnalyticsApp {
   renderRevenueChart() {
     const container = document.getElementById('revenue-chart');
     const data = analytics.metrics.revenueByDate;
-    const entries = Object.entries(data).slice(-7); // Last 7 days
+    
+    if (!data || Object.keys(data).length === 0) {
+      container.innerHTML = '<p style="color: var(--text-secondary);">No revenue data available</p>';
+      return;
+    }
+
+    // Sort entries chronologically and take last 7
+    const entries = Object.entries(data)
+      .sort(([dateA], [dateB]) => new Date(dateA) - new Date(dateB))
+      .slice(-7);
 
     if (entries.length === 0) {
       container.innerHTML = '<p style="color: var(--text-secondary);">No revenue data available</p>';
       return;
     }
 
-    const maxValue = Math.max(...entries.map(([_, value]) => value));
+    const maxValue = Math.max(...entries.map(([_, value]) => value), 1);
 
     container.innerHTML = `
       <div class="chart-bar">
-        ${entries.map(([date, revenue]) => `
-          <div class="bar-item">
-            <div class="bar-value">${analytics.formatCurrency(revenue)}</div>
-            <div class="bar" style="height: ${(revenue / maxValue) * 100}%; min-height: 20px; background: var(--success);"></div>
-            <div class="bar-label">${new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
-          </div>
-        `).join('')}
+        ${entries.map(([date, revenue]) => {
+          // Calculate percentage height with minimum of 8% for visibility
+          const heightPercent = Math.max((revenue / maxValue) * 100, 8);
+          return `
+            <div class="bar-item">
+              <div class="bar-value">${analytics.formatCurrency(revenue)}</div>
+              <div class="bar" style="height: ${heightPercent}%; background: var(--success);"></div>
+              <div class="bar-label">${date}</div>
+            </div>
+          `;
+        }).join('')}
       </div>
+    `;
+  }
+
+  renderComplexityChart() {
+    const container = document.getElementById('complexity-chart');
+    const data = analytics.metrics.sessionComplexity;
+    
+    if (!data || Object.keys(data).length === 0) {
+      container.innerHTML = '<p style="color: var(--text-secondary);">No session complexity data available</p>';
+      return;
+    }
+
+    // Sort by customer count
+    const entries = Object.entries(data)
+      .sort(([a], [b]) => parseInt(a) - parseInt(b))
+      .filter(([customerCount]) => parseInt(customerCount) > 0); // Exclude 0 customers
+
+    if (entries.length === 0) {
+      container.innerHTML = '<p style="color: var(--text-secondary);">No session complexity data available</p>';
+      return;
+    }
+
+    const maxDuration = Math.max(...entries.map(([_, v]) => v.avgDuration), 1);
+
+    container.innerHTML = `
+      <div class="complexity-chart">
+        ${entries.map(([customerCount, metrics]) => {
+          const heightPercent = Math.max((metrics.avgDuration / maxDuration) * 100, 8);
+          const label = customerCount === '1' ? '1 customer' : `${customerCount} customers`;
+          
+          return `
+            <div class="complexity-item">
+              <div class="complexity-value">
+                <div>${Math.round(metrics.avgDuration)}min</div>
+                <div class="complexity-subvalue">${metrics.avgItems.toFixed(1)} items</div>
+              </div>
+              <div class="bar" style="height: ${heightPercent}%; background: var(--info);"></div>
+              <div class="bar-label">${label}</div>
+              <div class="complexity-count">${metrics.sessionCount} sessions</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  renderComplexityChart() {
+    const container = document.getElementById('complexity-chart');
+    const data = analytics.metrics.sessionComplexity;
+    
+    if (!data || Object.keys(data).length === 0) {
+      container.innerHTML = '<p style="color: var(--text-secondary);">No session complexity data available</p>';
+      return;
+    }
+
+    // Sort by customer count
+    const entries = Object.entries(data)
+      .sort(([a], [b]) => parseInt(a) - parseInt(b))
+      .filter(([customerCount]) => parseInt(customerCount) > 0); // Exclude 0 customers
+
+    if (entries.length === 0) {
+      container.innerHTML = '<p style="color: var(--text-secondary);">No session complexity data available</p>';
+      return;
+    }
+
+    const maxDuration = Math.max(...entries.map(([_, v]) => v.avgDuration), 1);
+
+    container.innerHTML = `
+      <div class="complexity-chart">
+        ${entries.map(([customerCount, metrics]) => {
+          const heightPercent = Math.max((metrics.avgDuration / maxDuration) * 100, 8);
+          const label = customerCount === '1' ? '1 customer' : `${customerCount} customers`;
+          
+          return `
+            <div class="complexity-item">
+              <div class="complexity-value">
+                <div>${Math.round(metrics.avgDuration)}min</div>
+                <div class="complexity-subvalue">${metrics.avgItems.toFixed(1)} items</div>
+              </div>
+              <div class="bar" style="height: ${heightPercent}%; background: var(--info);"></div>
+              <div class="bar-label">${label}</div>
+              <div class="complexity-count">${metrics.sessionCount} sessions</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  renderHeatmapChart() {
+    const container = document.getElementById('heatmap-chart');
+    const data = analytics.metrics.activityHeatmap;
+    
+    if (!data || !data.dates || data.dates.length === 0) {
+      container.innerHTML = '<p style="color: var(--text-secondary);">No activity data available</p>';
+      return;
+    }
+
+    const getIntensityColor = (count, maxCount) => {
+      if (count === 0) return 'var(--border)';
+      const intensity = count / maxCount;
+      if (intensity >= 0.7) return 'var(--danger)';
+      if (intensity >= 0.4) return 'var(--warning)';
+      if (intensity >= 0.2) return 'var(--primary)';
+      return 'var(--info)';
+    };
+
+    container.innerHTML = `
+      <div class="heatmap-wrapper">
+        <div class="heatmap-container">
+          <div class="heatmap-y-labels">
+            ${data.hours.map(hour => {
+              const label = hour === 0 ? '12a' : hour < 12 ? `${hour}a` : hour === 12 ? '12p' : `${hour-12}p`;
+              return `<div class="heatmap-y-label">${label}</div>`;
+            }).join('')}
+          </div>
+          <div class="heatmap-grid">
+            ${data.dates.map(date => {
+              const hourCounts = data.data[date] || new Array(24).fill(0);
+              return `
+                <div class="heatmap-column">
+                  <div class="heatmap-x-label">${date}</div>
+                  ${hourCounts.map((count, hour) => `
+                    <div class="heatmap-cell" 
+                         style="background: ${getIntensityColor(count, data.maxCount)};" 
+                         title="${date} ${hour}:00 - ${count} events">
+                      ${count > 0 ? count : ''}
+                    </div>
+                  `).join('')}
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+        <div class="heatmap-legend">
+          <span><strong>Intensity</strong></span>
+          <div class="legend-item"><div class="legend-color" style="background: var(--border);"></div>None</div>
+          <div class="legend-item"><div class="legend-color" style="background: var(--info);"></div>Low</div>
+          <div class="legend-item"><div class="legend-color" style="background: var(--primary);"></div>Medium</div>
+          <div class="legend-item"><div class="legend-color" style="background: var(--warning);"></div>High</div>
+          <div class="legend-item"><div class="legend-color" style="background: var(--danger);"></div>Peak</div>
+        </div>
+      </div>
+    `;
+  }
+
+  renderHourlyChart() {
+    const container = document.getElementById('hourly-chart');
+    const data = analytics.metrics.hourlyDistribution;
+    
+    if (!data || !data.hourlyCount) {
+      container.innerHTML = '<p style="color: var(--text-secondary);">No activity data available</p>';
+      return;
+    }
+
+    const maxValue = Math.max(...data.hourlyCount, 1);
+    const peakHours = new Set(data.peakHours);
+
+    container.innerHTML = `
+      <div class="hourly-chart">
+        ${data.hourlyCount.map((count, hour) => {
+          const heightPercent = Math.max((count / maxValue) * 100, 3);
+          const isPeak = peakHours.has(hour);
+          const label = hour === 0 ? '12am' : 
+                       hour < 12 ? `${hour}am` : 
+                       hour === 12 ? '12pm' : 
+                       `${hour - 12}pm`;
+          
+          return `
+            <div class="hourly-item">
+              <div class="hourly-value">${Math.round(count)}</div>
+              <div class="bar" style="height: ${heightPercent}%; background: ${isPeak ? 'var(--warning)' : 'var(--primary)'};"></div>
+              <div class="hourly-label">${label}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+      <div class="hourly-info">
+        <span><strong>Peak hours:</strong> ${data.peakHours.map(h => 
+          h === 0 ? '12am' : h < 12 ? `${h}am` : h === 12 ? '12pm' : `${h - 12}pm`
+        ).join(', ')}</span>
+        <span><strong>Period:</strong> ${data.totalDays} day${data.totalDays !== 1 ? 's' : ''}</span>
+        <span><strong>Total events:</strong> ${data.totalEvents.toLocaleString()}</span>
+      </div>
+    `;
+  }
+
+  renderQualityAnalysis() {
+    this.renderQualityDistribution();
+    this.renderSuspiciousSessions();
+  }
+
+  renderQualityDistribution() {
+    const container = document.getElementById('quality-distribution-chart');
+    const quality = analytics.metrics.qualityMetrics;
+    
+    if (!quality || quality.totalAnalyzed === 0) {
+      container.innerHTML = '<p style="color: var(--text-secondary); padding: 1rem;">No completed sessions to analyze</p>';
+      return;
+    }
+
+    const dist = quality.distribution;
+    const total = quality.totalAnalyzed;
+    
+    container.innerHTML = `
+      <div class="quality-bars">
+        <div class="quality-bar-item">
+          <div class="quality-bar-header">
+            <span class="quality-bar-label">🟢 Authentic (70-100)</span>
+            <span class="quality-bar-count">${dist.authentic} sessions</span>
+          </div>
+          <div class="quality-bar-track">
+            <div class="quality-bar-fill quality-bar-green" style="width: ${(dist.authentic / total) * 100}%"></div>
+          </div>
+          <div class="quality-bar-percent">${((dist.authentic / total) * 100).toFixed(0)}%</div>
+        </div>
+        
+        <div class="quality-bar-item">
+          <div class="quality-bar-header">
+            <span class="quality-bar-label">🟡 Questionable (40-69)</span>
+            <span class="quality-bar-count">${dist.questionable} sessions</span>
+          </div>
+          <div class="quality-bar-track">
+            <div class="quality-bar-fill quality-bar-yellow" style="width: ${(dist.questionable / total) * 100}%"></div>
+          </div>
+          <div class="quality-bar-percent">${((dist.questionable / total) * 100).toFixed(0)}%</div>
+        </div>
+        
+        <div class="quality-bar-item">
+          <div class="quality-bar-header">
+            <span class="quality-bar-label">🔴 Suspicious (0-39)</span>
+            <span class="quality-bar-count">${dist.suspicious} sessions</span>
+          </div>
+          <div class="quality-bar-track">
+            <div class="quality-bar-fill quality-bar-red" style="width: ${(dist.suspicious / total) * 100}%"></div>
+          </div>
+          <div class="quality-bar-percent">${((dist.suspicious / total) * 100).toFixed(0)}%</div>
+        </div>
+      </div>
+    `;
+  }
+
+  renderSuspiciousSessions() {
+    const container = document.getElementById('suspicious-sessions-list');
+    
+    // Get all completed sessions with quality scores from filtered data
+    const filteredData = analytics.getFilteredData();
+    const sessionsWithQuality = filteredData.sessions
+      .filter(s => s.endTime)
+      .map(s => ({
+        session: s,
+        quality: analytics.calculateSessionAuthenticity(s.sessionId)
+      }))
+      .filter(item => item.quality !== null && item.quality.flags.length > 0)
+      .sort((a, b) => a.quality.score - b.quality.score)
+      .slice(0, 5); // Top 5 most suspicious
+
+    if (sessionsWithQuality.length === 0) {
+      container.innerHTML = '<p style="color: var(--success); padding: 1rem; text-align: center;">✅ No flagged sessions detected!</p>';
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="suspicious-items">
+        ${sessionsWithQuality.map(({ session, quality }) => {
+          const badge = analytics.getQualityBadge(quality.score);
+          return `
+            <div class="suspicious-item" onclick="app.viewSession('${session.sessionId}')">
+              <div class="suspicious-header">
+                <code class="suspicious-id">${session.sessionId.substring(0, 18)}...</code>
+                <span class="quality-badge ${badge.class}">${badge.emoji} ${quality.score}</span>
+              </div>
+              <div class="suspicious-details">
+                <small>📅 ${analytics.formatDate(session.startTime)}</small>
+                <small>⏱️ ${quality.metrics.sessionDuration} min (${(quality.metrics.activityRatio * 100).toFixed(0)}% active)</small>
+              </div>
+              <div class="suspicious-flags">
+                ${quality.flags.map(flag => 
+                  `<span class="flag-tag-small">${analytics.getFlagDescription(flag)}</span>`
+                ).join(' ')}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+      ${sessionsWithQuality.length >= 5 ? '<p style="color: var(--text-secondary); font-size: 0.75rem; text-align: center; margin-top: 0.5rem;">Showing top 5 most suspicious sessions</p>' : ''}
     `;
   }
 
   renderSessionsTable() {
     const tbody = document.getElementById('sessions-table-body');
-    let sessions = analytics.data.sessions.sort((a, b) => 
+    // Use filtered data from analytics
+    const filteredData = analytics.getFilteredData();
+    let sessions = filteredData.sessions.sort((a, b) => 
       new Date(b.startTime) - new Date(a.startTime)
     );
 
@@ -136,11 +477,34 @@ class AnalyticsApp {
 
     tbody.innerHTML = sessions.slice(0, 20).map(session => {
       const details = analytics.getSessionDetails(session.sessionId);
+      const quality = analytics.calculateSessionAuthenticity(session.sessionId);
+      
+      let qualityBadge = '';
+      let flagsText = '';
+      
+      if (quality) {
+        const badge = analytics.getQualityBadge(quality.score);
+        qualityBadge = `<span class="quality-badge ${badge.class}" title="Score: ${quality.score}/100">${badge.emoji} ${quality.score}</span>`;
+        
+        if (quality.flags.length > 0) {
+          flagsText = quality.flags.map(flag => 
+            `<span class="flag-tag">${analytics.getFlagDescription(flag)}</span>`
+          ).join(' ');
+        } else {
+          flagsText = '<span style="color: var(--text-secondary);">-</span>';
+        }
+      } else {
+        qualityBadge = '<span class="quality-badge badge-unknown">⚪ N/A</span>';
+        flagsText = '<span style="color: var(--text-secondary);">In Progress</span>';
+      }
+      
       return `
         <tr>
           <td><code>${session.sessionId.substring(0, 20)}...</code></td>
           <td>${analytics.formatDate(session.startTime)}</td>
           <td>${analytics.formatDuration(session.startTime, session.endTime)}</td>
+          <td>${qualityBadge}</td>
+          <td class="flags-cell">${flagsText}</td>
           <td>${details.customerCount}</td>
           <td><strong>${analytics.formatCurrency(details.totalRevenue)}</strong></td>
           <td><span class="status-badge status-${session.status}">${session.status}</span></td>
@@ -191,7 +555,23 @@ class AnalyticsApp {
 
   viewSession(sessionId) {
     const details = analytics.getSessionDetails(sessionId);
-    alert(`Session Details:\n\nID: ${sessionId}\nTabs: ${details.tabs.length}\nRevenue: ${analytics.formatCurrency(details.totalRevenue)}\nEvents: ${details.events.length}`);
+    const quality = analytics.calculateSessionAuthenticity(sessionId);
+    
+    let message = `Session Details:\n\nID: ${sessionId}\nTabs: ${details.tabs.length}\nRevenue: ${analytics.formatCurrency(details.totalRevenue)}\nEvents: ${details.events.length}`;
+    
+    if (quality) {
+      const badge = analytics.getQualityBadge(quality.score);
+      message += `\n\n--- Session Quality ---\nAuthenticity Score: ${quality.score}/100 ${badge.emoji}\n`;
+      message += `Duration: ${quality.metrics.sessionDuration} min\n`;
+      message += `Activity: ${quality.metrics.activityDuration} min (${(quality.metrics.activityRatio * 100).toFixed(1)}%)\n`;
+      message += `Audio Chunks: ${quality.metrics.audioChunkCount}\n`;
+      
+      if (quality.flags.length > 0) {
+        message += `\n⚠️ Flags: ${quality.flags.map(f => analytics.getFlagDescription(f)).join(', ')}`;
+      }
+    }
+    
+    alert(message);
     // TODO: Implement detailed session view modal
   }
 
@@ -213,6 +593,38 @@ class AnalyticsApp {
         this.renderSessionsTable();
       });
     }
+
+    // Date Range Filter
+    const dateRangeFilter = document.getElementById('date-range-filter');
+    if (dateRangeFilter) {
+      dateRangeFilter.addEventListener('change', (e) => {
+        this.handleDateRangeChange(e.target.value);
+      });
+    }
+  }
+
+  handleDateRangeChange(filterType) {
+    // Update analytics filter
+    analytics.setDateFilter(filterType);
+    
+    // Update filter info badge
+    const filterInfo = document.getElementById('filter-info');
+    const filterLabels = {
+      'all': 'All Time',
+      '3': 'Last 3 Days',
+      '5': 'Last 5 Days',
+      '7': 'Last 7 Days',
+      '30': 'Last 30 Days',
+      '90': 'Last 3 Months',
+      'custom': 'Custom Range'
+    };
+    
+    if (filterInfo) {
+      filterInfo.innerHTML = `<span class="filter-badge">Showing: ${filterLabels[filterType]}</span>`;
+    }
+    
+    // Re-render entire dashboard with new filtered data
+    this.renderDashboard();
   }
 }
 
