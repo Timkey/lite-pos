@@ -760,6 +760,106 @@ body {
     margin-bottom: 1rem;
 }
 
+/* Activity Heatmap Styles */
+.heatmap-wrapper {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+.heatmap-container {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding: 1rem 0;
+    flex: 1;
+}
+
+.heatmap-y-labels {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-top: 2rem;
+}
+
+.heatmap-y-label {
+    height: 20px;
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 0.5rem;
+    min-width: 30px;
+}
+
+.heatmap-grid {
+    display: flex;
+    gap: 2px;
+    flex: 1;
+}
+
+.heatmap-column {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 45px;
+}
+
+.heatmap-x-label {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    text-align: center;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+}
+
+.heatmap-cell {
+    height: 20px;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.heatmap-cell:hover {
+    transform: scale(1.1);
+    z-index: 10;
+    box-shadow: var(--shadow);
+}
+
+.heatmap-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+    padding: 1rem;
+    background: var(--background);
+    border-radius: var(--radius);
+    font-size: 0.875rem;
+    min-width: 120px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.legend-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 2px;
+}
+
 /* Hourly Activity Chart Styles */
 .hourly-chart {
     display: flex;

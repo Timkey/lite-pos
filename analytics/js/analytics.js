@@ -144,6 +144,9 @@ class Analytics {
     // HOURLY ACTIVITY DISTRIBUTION
     this.metrics.hourlyDistribution = this.calculateHourlyDistribution();
     
+    // ACTIVITY HEATMAP (Day x Hour)
+    this.metrics.activityHeatmap = this.calculateActivityHeatmap();
+    
     // Restore original data after calculations
     this.data = originalData;
   }
@@ -543,6 +546,46 @@ class Analytics {
       totalDays: numDays,
       peakHours,
       totalEvents: this.data.events.length
+    };
+  }
+
+  calculateActivityHeatmap() {
+    // Create a map of date -> hour -> count
+    const heatmapData = {};
+    const allDates = new Set();
+    
+    this.data.events.forEach(event => {
+      const timestamp = new Date(event.timestampMs || event.timestamp);
+      const dateKey = timestamp.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric'
+      });
+      const hour = timestamp.getHours();
+      
+      if (!heatmapData[dateKey]) {
+        heatmapData[dateKey] = new Array(24).fill(0);
+      }
+      heatmapData[dateKey][hour]++;
+      allDates.add(dateKey);
+    });
+    
+    // Sort dates chronologically
+    const sortedDates = Array.from(allDates).sort((a, b) => {
+      return new Date(a + ', 2026') - new Date(b + ', 2026');
+    });
+    
+    // Find max value for normalization
+    let maxCount = 0;
+    Object.values(heatmapData).forEach(hourArray => {
+      const max = Math.max(...hourArray);
+      if (max > maxCount) maxCount = max;
+    });
+    
+    return {
+      data: heatmapData,
+      dates: sortedDates,
+      maxCount,
+      hours: Array.from({ length: 24 }, (_, i) => i)
     };
   }
 

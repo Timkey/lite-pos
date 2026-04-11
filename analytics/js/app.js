@@ -90,6 +90,7 @@ class AnalyticsApp {
     this.renderSessionChart();
     this.renderRevenueChart();
     this.renderComplexityChart();
+    this.renderHeatmapChart();
     this.renderHourlyChart();
   }
 
@@ -251,6 +252,63 @@ class AnalyticsApp {
             </div>
           `;
         }).join('')}
+      </div>
+    `;
+  }
+
+  renderHeatmapChart() {
+    const container = document.getElementById('heatmap-chart');
+    const data = analytics.metrics.activityHeatmap;
+    
+    if (!data || !data.dates || data.dates.length === 0) {
+      container.innerHTML = '<p style="color: var(--text-secondary);">No activity data available</p>';
+      return;
+    }
+
+    const getIntensityColor = (count, maxCount) => {
+      if (count === 0) return 'var(--border)';
+      const intensity = count / maxCount;
+      if (intensity >= 0.7) return 'var(--danger)';
+      if (intensity >= 0.4) return 'var(--warning)';
+      if (intensity >= 0.2) return 'var(--primary)';
+      return 'var(--info)';
+    };
+
+    container.innerHTML = `
+      <div class="heatmap-wrapper">
+        <div class="heatmap-container">
+          <div class="heatmap-y-labels">
+            ${data.hours.map(hour => {
+              const label = hour === 0 ? '12a' : hour < 12 ? `${hour}a` : hour === 12 ? '12p' : `${hour-12}p`;
+              return `<div class="heatmap-y-label">${label}</div>`;
+            }).join('')}
+          </div>
+          <div class="heatmap-grid">
+            ${data.dates.map(date => {
+              const hourCounts = data.data[date] || new Array(24).fill(0);
+              return `
+                <div class="heatmap-column">
+                  <div class="heatmap-x-label">${date}</div>
+                  ${hourCounts.map((count, hour) => `
+                    <div class="heatmap-cell" 
+                         style="background: ${getIntensityColor(count, data.maxCount)};" 
+                         title="${date} ${hour}:00 - ${count} events">
+                      ${count > 0 ? count : ''}
+                    </div>
+                  `).join('')}
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+        <div class="heatmap-legend">
+          <span><strong>Intensity</strong></span>
+          <div class="legend-item"><div class="legend-color" style="background: var(--border);"></div>None</div>
+          <div class="legend-item"><div class="legend-color" style="background: var(--info);"></div>Low</div>
+          <div class="legend-item"><div class="legend-color" style="background: var(--primary);"></div>Medium</div>
+          <div class="legend-item"><div class="legend-color" style="background: var(--warning);"></div>High</div>
+          <div class="legend-item"><div class="legend-color" style="background: var(--danger);"></div>Peak</div>
+        </div>
       </div>
     `;
   }
