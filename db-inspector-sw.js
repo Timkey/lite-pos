@@ -1,11 +1,11 @@
 // Service Worker for DB Inspector - Offline Support
-const VERSION = '20260411-b6bc23a';
+const VERSION = '20260411-1aa8fe9';
 const CACHE_NAME = `db-inspector-v${VERSION}`;
 
-// Base URLs without cache busting
+// Base URLs without cache busting - using relative paths
 const baseUrls = [
-  '/db-inspector.html',
-  '/db-inspector-manifest.json'
+  './db-inspector.html',
+  './db-inspector-manifest.json'
 ];
 
 // Add cache busting query parameter to all URLs
@@ -70,7 +70,7 @@ self.addEventListener('fetch', event => {
         }).catch(() => {
           // Offline fallback - return cached HTML for navigation requests
           if (event.request.destination === 'document') {
-            return caches.match('/db-inspector.html');
+            return caches.match('./db-inspector.html');
           }
           // For other requests, return a network error
           return Promise.reject('offline');

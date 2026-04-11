@@ -1,12 +1,12 @@
 // Service Worker for Root Landing Page - Offline Support
-const VERSION = '20260411-b6bc23a';
+const VERSION = '20260411-1aa8fe9';
 const CACHE_NAME = `recon-root-v${VERSION}`;
 
-// Base URLs without cache busting
+// Base URLs without cache busting - using relative paths
 const baseUrls = [
-  '/',
-  '/index.html',
-  '/manifest.json'
+  './',
+  './index.html',
+  './manifest.json'
 ];
 
 // Add cache busting query parameter to all URLs
@@ -71,8 +71,8 @@ self.addEventListener('fetch', event => {
         }).catch(() => {
           // Offline fallback - return cached index for navigation requests
           if (event.request.destination === 'document') {
-            return caches.match('/index.html')
-              .then(cached => cached || caches.match('/'));
+            return caches.match('./index.html')
+              .then(cached => cached || caches.match('./'));
           }
           // For other requests, return a network error
           return Promise.reject('offline');

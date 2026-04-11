@@ -1,16 +1,16 @@
 // Service Worker for Analytics App - Offline Support
-const VERSION = '20260411-b6bc23a';
+const VERSION = '20260411-1aa8fe9';
 const CACHE_NAME = `analytics-v${VERSION}`;
 
-// Base URLs without cache busting
+// Base URLs without cache busting - using relative paths
 const baseUrls = [
-  '/analytics/',
-  '/analytics/index.html',
-  '/analytics/css/main.css',
-  '/analytics/js/analytics.js',
-  '/analytics/js/app.js',
-  '/analytics/js/db-reader.js',
-  '/analytics/manifest.json'
+  './',
+  './index.html',
+  './css/main.css',
+  './js/analytics.js',
+  './js/app.js',
+  './js/db-reader.js',
+  './manifest.json'
 ];
 
 // Add cache busting query parameter to all URLs
@@ -76,8 +76,8 @@ self.addEventListener('fetch', event => {
         }).catch(() => {
           // Offline fallback - return cached index for navigation requests
           if (event.request.destination === 'document') {
-            return caches.match('/analytics/index.html')
-              .then(cached => cached || caches.match('/analytics/'));
+            return caches.match('./index.html')
+              .then(cached => cached || caches.match('./'));
           }
           // For other requests, return a network error
           return Promise.reject('offline');
