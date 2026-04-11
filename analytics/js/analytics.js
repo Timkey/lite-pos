@@ -141,6 +141,9 @@ class Analytics {
     // SESSION COMPLEXITY METRICS
     this.metrics.sessionComplexity = this.calculateSessionComplexity();
     
+    // HOURLY ACTIVITY DISTRIBUTION
+    this.metrics.hourlyDistribution = this.calculateHourlyDistribution();
+    
     // Restore original data after calculations
     this.data = originalData;
   }
@@ -507,6 +510,40 @@ class Analytics {
     });
     
     return result;
+  }
+
+  calculateHourlyDistribution() {
+    // Aggregate events by hour of day across all days
+    const hourlyCount = new Array(24).fill(0);
+    const daysWithActivity = new Set();
+    
+    this.data.events.forEach(event => {
+      const timestamp = new Date(event.timestampMs || event.timestamp);
+      const hour = timestamp.getHours();
+      hourlyCount[hour]++;
+      
+      // Track which days have activity
+      const dateKey = timestamp.toISOString().split('T')[0];
+      daysWithActivity.add(dateKey);
+    });
+    
+    // Calculate average per hour (divide by number of days)
+    const numDays = Math.max(daysWithActivity.size, 1);
+    const avgHourly = hourlyCount.map(count => count / numDays);
+    
+    // Find peak hours
+    const maxActivity = Math.max(...avgHourly);
+    const peakHours = avgHourly
+      .map((count, hour) => ({ hour, count }))
+      .filter(h => h.count >= maxActivity * 0.8)
+      .map(h => h.hour);
+    
+    return {
+      hourlyCount: avgHourly,
+      totalDays: numDays,
+      peakHours,
+      totalEvents: this.data.events.length
+    };
   }
 
   exportData() {

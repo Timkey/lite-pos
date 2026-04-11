@@ -760,6 +760,63 @@ body {
     margin-bottom: 1rem;
 }
 
+/* Hourly Activity Chart Styles */
+.hourly-chart {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-end;
+    height: 200px;
+    padding: 2.5rem 0.5rem 2.5rem 0.5rem;
+    position: relative;
+    overflow-x: auto;
+}
+
+.hourly-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    position: relative;
+    height: 100%;
+    min-width: 35px;
+}
+
+.hourly-value {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--text);
+    position: absolute;
+    top: -1.75rem;
+    white-space: nowrap;
+}
+
+.hourly-label {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    text-align: center;
+    white-space: nowrap;
+    position: absolute;
+    bottom: -2rem;
+}
+
+.hourly-item .bar {
+    width: 100%;
+    max-width: 30px;
+}
+
+.hourly-info {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    padding: 1rem;
+    background: var(--background);
+    border-radius: var(--radius);
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    flex-wrap: wrap;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .main-content {

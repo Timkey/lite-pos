@@ -90,6 +90,7 @@ class AnalyticsApp {
     this.renderSessionChart();
     this.renderRevenueChart();
     this.renderComplexityChart();
+    this.renderHourlyChart();
   }
 
   renderSessionChart() {
@@ -250,6 +251,47 @@ class AnalyticsApp {
             </div>
           `;
         }).join('')}
+      </div>
+    `;
+  }
+
+  renderHourlyChart() {
+    const container = document.getElementById('hourly-chart');
+    const data = analytics.metrics.hourlyDistribution;
+    
+    if (!data || !data.hourlyCount) {
+      container.innerHTML = '<p style="color: var(--text-secondary);">No activity data available</p>';
+      return;
+    }
+
+    const maxValue = Math.max(...data.hourlyCount, 1);
+    const peakHours = new Set(data.peakHours);
+
+    container.innerHTML = `
+      <div class="hourly-chart">
+        ${data.hourlyCount.map((count, hour) => {
+          const heightPercent = Math.max((count / maxValue) * 100, 3);
+          const isPeak = peakHours.has(hour);
+          const label = hour === 0 ? '12am' : 
+                       hour < 12 ? `${hour}am` : 
+                       hour === 12 ? '12pm' : 
+                       `${hour - 12}pm`;
+          
+          return `
+            <div class="hourly-item">
+              <div class="hourly-value">${Math.round(count)}</div>
+              <div class="bar" style="height: ${heightPercent}%; background: ${isPeak ? 'var(--warning)' : 'var(--primary)'};"></div>
+              <div class="hourly-label">${label}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+      <div class="hourly-info">
+        <span><strong>Peak hours:</strong> ${data.peakHours.map(h => 
+          h === 0 ? '12am' : h < 12 ? `${h}am` : h === 12 ? '12pm' : `${h - 12}pm`
+        ).join(', ')}</span>
+        <span><strong>Period:</strong> ${data.totalDays} day${data.totalDays !== 1 ? 's' : ''}</span>
+        <span><strong>Total events:</strong> ${data.totalEvents.toLocaleString()}</span>
       </div>
     `;
   }
