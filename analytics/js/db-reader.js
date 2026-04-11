@@ -142,6 +142,15 @@ class ShopDataReader {
     }
   }
 
+  async getAudioChunks() {
+    try {
+      return await this.getAll('audioChunks');
+    } catch (error) {
+      console.error('[Analytics] Error fetching audio chunks:', error);
+      return [];
+    }
+  }
+
   async getTabsBySession(sessionId) {
     try {
       return await this.getAllByIndex('tabs', 'sessionId', sessionId);
@@ -162,18 +171,20 @@ class ShopDataReader {
 
   async getAllData() {
     try {
-      const [sessions, tabs, lineItems, events] = await Promise.all([
+      const [sessions, tabs, lineItems, events, audioChunks] = await Promise.all([
         this.getSessions(),
         this.getTabs(),
         this.getLineItems(),
-        this.getEvents()
+        this.getEvents(),
+        this.getAudioChunks()
       ]);
 
       return {
         sessions,
         tabs,
         lineItems,
-        events
+        events,
+        audioChunks
       };
     } catch (error) {
       console.error('[Analytics] Error fetching all data:', error);

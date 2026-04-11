@@ -41,6 +41,25 @@
 
             <!-- Dashboard Content -->
             <div id="dashboard-content" style="display: none;">
+                <!-- Date Range Filter -->
+                <div class="filter-bar">
+                    <div class="filter-group">
+                        <label for="date-range-filter" class="filter-label">📅 Date Range:</label>
+                        <select id="date-range-filter" class="date-range-select">
+                            <option value="all">All Time</option>
+                            <option value="3">Last 3 Days</option>
+                            <option value="5">Last 5 Days</option>
+                            <option value="7" selected>Last 7 Days</option>
+                            <option value="30">Last 30 Days</option>
+                            <option value="90">Last 3 Months</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                    </div>
+                    <div class="filter-info" id="filter-info">
+                        <span class="filter-badge">Showing: Last 7 Days</span>
+                    </div>
+                </div>
+
                 <!-- Summary Cards -->
                 <div class="summary-cards">
                     <div class="card">
@@ -76,6 +95,45 @@
                     </div>
                 </div>
 
+                <!-- Session Quality Cards -->
+                <div class="summary-cards" style="margin-top: 1rem;">
+                    <div class="card card-quality">
+                        <div class="card-icon">🎯</div>
+                        <div class="card-content">
+                            <h3 class="card-value" id="avg-authenticity">--</h3>
+                            <p class="card-label">Avg Authenticity</p>
+                            <small class="card-subtitle" id="quality-trend"></small>
+                        </div>
+                    </div>
+
+                    <div class="card card-quality">
+                        <div class="card-icon">🚩</div>
+                        <div class="card-content">
+                            <h3 class="card-value" id="flagged-sessions">0</h3>
+                            <p class="card-label">Flagged Sessions</p>
+                            <small class="card-subtitle" id="flagged-percentage"></small>
+                        </div>
+                    </div>
+
+                    <div class="card card-quality">
+                        <div class="card-icon">🎤</div>
+                        <div class="card-content">
+                            <h3 class="card-value" id="audio-coverage">--%</h3>
+                            <p class="card-label">Audio Coverage</p>
+                            <small class="card-subtitle" id="audio-subtitle"></small>
+                        </div>
+                    </div>
+
+                    <div class="card card-quality">
+                        <div class="card-icon">📊</div>
+                        <div class="card-content">
+                            <h3 class="card-value" id="quality-distribution">--</h3>
+                            <p class="card-label">Quality Distribution</p>
+                            <small class="card-subtitle" id="distribution-subtitle">🟢 Auth | 🟡 Quest | 🔴 Susp</small>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Charts Section -->
                 <div class="charts-section">
                     <!-- Session Activity -->
@@ -88,6 +146,29 @@
                     <div class="chart-card">
                         <h2 class="chart-title">Revenue Trend</h2>
                         <div id="revenue-chart" class="chart-container"></div>
+                    </div>
+                </div>
+
+                <!-- Session Quality Analysis Section -->
+                <div class="quality-analysis-section">
+                    <h2 class="section-title">📊 Session Quality Analysis</h2>
+                    
+                    <div class="quality-cards">
+                        <!-- Quality Distribution -->
+                        <div class="quality-card">
+                            <h3 class="quality-card-title">Quality Distribution</h3>
+                            <div id="quality-distribution-chart" class="quality-chart">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Suspicious Sessions Alert -->
+                        <div class="quality-card alert-card">
+                            <h3 class="quality-card-title">⚠️ Flagged Sessions</h3>
+                            <div id="suspicious-sessions-list" class="suspicious-list">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -111,6 +192,8 @@
                                         <th>Session ID</th>
                                         <th>Start Time</th>
                                         <th>Duration</th>
+                                        <th>Quality</th>
+                                        <th>Flags</th>
                                         <th>Customers</th>
                                         <th>Revenue</th>
                                         <th>Status</th>
