@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4fc3f7">
+    <link rel="manifest" href="db-inspector-manifest.json">
     <title>Safe Database Inspector</title>
     <style>
         body {
@@ -218,6 +220,95 @@
             background: #1976d2;
             color: white;
             border-color: #1976d2;
+        }
+        
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+                margin-bottom: 1rem;
+            }
+            
+            h2 {
+                font-size: 1.25rem;
+                margin-top: 1rem;
+            }
+            
+            .section {
+                padding: 1rem;
+            }
+            
+            .header-nav {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .action-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .action-group label {
+                min-width: auto;
+            }
+            
+            button, select {
+                width: 100%;
+                margin: 0.25rem 0;
+            }
+            
+            .btn-small {
+                padding: 0.5rem;
+                font-size: 0.8rem;
+            }
+            
+            pre {
+                font-size: 0.75rem;
+                padding: 0.75rem;
+                max-height: 300px;
+            }
+            
+            table {
+                font-size: 0.75rem;
+            }
+            
+            th, td {
+                padding: 0.5rem;
+            }
+            
+            .table-container {
+                max-height: 400px;
+            }
+            
+            .snapshot-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .snapshot-actions {
+                width: 100%;
+                flex-direction: column;
+            }
+            
+            .snapshot-actions button {
+                width: 100%;
+            }
+            
+            td {
+                max-width: 120px;
+            }
+            
+            /* Allow horizontal scrolling for wide tables */
+            .table-container {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
         }
     </style>
 </head>
@@ -1315,5 +1406,15 @@
             }
         }
     </script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('db-inspector-sw.js')
+                .then(reg => console.log('[DB Inspector] Service Worker registered:', reg.scope))
+                .catch(err => console.error('[DB Inspector] Service Worker registration failed:', err));
+        }
+    </script>
 </body>
+</html>
 </html>

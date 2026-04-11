@@ -1,6 +1,6 @@
 // Service Worker for Offline Support
 // Update this version with each deployment (use timestamp or commit hash)
-const VERSION = '20260410-fea1464'; // Format: YYYYMMDD-shortcommit or timestamp
+const VERSION = '20260411-b6bc23a'; // Format: YYYYMMDD-shortcommit or timestamp
 const CACHE_NAME = `shop-tracker-v${VERSION}`;
 
 // Base URLs without cache busting
@@ -78,7 +78,7 @@ self.addEventListener('fetch', event => {
 
         return fetch(fetchRequest).then(response => {
           // Check if valid response
-          if (!response || response.status !== 200 || response.type !== 'basic') {
+          if (!response || response.status !== 200) {
             return response;
           }
 
@@ -91,10 +91,13 @@ self.addEventListener('fetch', event => {
 
           return response;
         }).catch(() => {
-          // Offline fallback
+          // Offline fallback - return cached index for navigation requests
           if (event.request.destination === 'document') {
-            return caches.match('/index.html');
+            return caches.match('/shop-tracker/index.html')
+              .then(cached => cached || caches.match('/shop-tracker/'));
           }
+          // For other requests, return a network error
+          return Promise.reject('offline');
         });
       })
   );
