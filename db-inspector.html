@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4fc3f7">
+    <link rel="manifest" href="db-inspector-manifest.json">
     <title>Safe Database Inspector</title>
     <style>
         body {
@@ -1404,5 +1406,15 @@
             }
         }
     </script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('db-inspector-sw.js')
+                .then(reg => console.log('[DB Inspector] Service Worker registered:', reg.scope))
+                .catch(err => console.error('[DB Inspector] Service Worker registration failed:', err));
+        }
+    </script>
 </body>
+</html>
 </html>

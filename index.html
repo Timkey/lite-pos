@@ -10,6 +10,7 @@
     
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="shop-tracker/assets/icon-192.svg">
+    <link rel="manifest" href="manifest.json">
     
     <style>
         :root {
@@ -277,5 +278,14 @@
     <footer class="footer">
         <p>&copy; 2026 Business Tools Dashboard. All rights reserved.</p>
     </footer>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('[Root] Service Worker registered:', reg.scope))
+                .catch(err => console.error('[Root] Service Worker registration failed:', err));
+        }
+    </script>
 </body>
 </html>
