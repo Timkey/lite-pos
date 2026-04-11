@@ -4,6 +4,7 @@
     --success: #10b981;
     --warning: #f59e0b;
     --danger: #ef4444;
+    --info: #3b82f6;
     --background: #f8fafc;
     --surface: #ffffff;
     --text: #1e293b;
@@ -697,6 +698,66 @@ body {
     white-space: nowrap;
     position: absolute;
     bottom: -2rem;
+}
+
+/* Complexity Chart Styles */
+.complexity-chart {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-end;
+    height: 250px;
+    padding: 4rem 1rem 4rem 1rem;
+    position: relative;
+}
+
+.complexity-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    position: relative;
+    height: 100%;
+    min-width: 60px;
+    max-width: 120px;
+}
+
+.complexity-item .bar {
+    max-width: 80px;
+    width: 100%;
+}
+
+.complexity-value {
+    position: absolute;
+    top: -3.5rem;
+    text-align: center;
+    width: 100%;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.complexity-subvalue {
+    font-size: 0.65rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+.complexity-count {
+    position: absolute;
+    bottom: -3.5rem;
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    text-align: center;
+    width: 100%;
+}
+
+.chart-subtitle {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-top: -0.5rem;
+    margin-bottom: 1rem;
 }
 
 /* Responsive */

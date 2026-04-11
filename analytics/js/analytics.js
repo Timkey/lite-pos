@@ -89,13 +89,16 @@ class Analytics {
     this.metrics.completedSessions = completedSessions.length;
 
     // Total customers - count unique customers PER SESSION
-    // customerId is session-specific (1, 2, 3 per session), not a global unique ID
-    // So total customers = sum of max customerId per session
+    // customerId format is "Customer 1", "Customer 2", etc. - session-specific, not global
+    // So total customers = sum of max customer number per session
     this.metrics.totalCustomers = sessions.reduce((total, session) => {
       const sessionTabs = tabs.filter(t => t.sessionId === session.sessionId);
       const maxCustomerId = sessionTabs.reduce((max, tab) => {
-        const cid = tab.customerId || 0;
-        return Math.max(max, cid);
+        if (!tab.customerId) return max;
+        // Extract number from "Customer N" format
+        const match = tab.customerId.match(/\d+/);
+        const customerNum = match ? parseInt(match[0]) : 0;
+        return Math.max(max, customerNum);
       }, 0);
       return total + maxCustomerId;
     }, 0);
@@ -134,6 +137,9 @@ class Analytics {
 
     // SESSION QUALITY METRICS
     this.metrics.qualityMetrics = this.calculateQualityMetrics();
+    
+    // SESSION COMPLEXITY METRICS
+    this.metrics.sessionComplexity = this.calculateSessionComplexity();
     
     // Restore original data after calculations
     this.data = originalData;
@@ -436,6 +442,71 @@ class Analytics {
       distribution,
       totalAnalyzed: scores.length
     };
+  }
+
+  calculateSessionComplexity() {
+    // Group sessions by number of customers served
+    const complexityByCustomerCount = {};
+    
+    this.data.sessions.forEach(session => {
+      if (!session.endTime) return; // Only completed sessions
+      
+      // Get tabs for this session
+      const sessionTabs = this.data.tabs.filter(t => t.sessionId === session.sessionId);
+      
+      // Extract customer numbers from customerId strings like "Customer 1", "Customer 2"
+      const customerCount = sessionTabs.reduce((max, tab) => {
+        if (!tab.customerId) return max;
+        // Extract number from "Customer N" format
+        const match = tab.customerId.match(/\d+/);
+        const customerNum = match ? parseInt(match[0]) : 0;
+        return Math.max(max, customerNum);
+      }, 0);
+      
+      // Get items for this session
+      const tabIds = sessionTabs.map(t => t.tabId);
+      const sessionItems = this.data.lineItems.filter(item => 
+        tabIds.includes(item.tabId));
+      
+      // Calculate duration in minutes
+      const duration = (new Date(session.endTime) - new Date(session.startTime)) / (1000 * 60);
+      
+      // Get revenue for this session
+      const revenue = sessionTabs.reduce((sum, tab) => {
+        const rev = (tab.agreedTotal !== null && tab.agreedTotal !== undefined) 
+          ? tab.agreedTotal 
+          : (tab.total || 0);
+        return sum + rev;
+      }, 0);
+      
+      if (!complexityByCustomerCount[customerCount]) {
+        complexityByCustomerCount[customerCount] = {
+          sessionCount: 0,
+          totalDuration: 0,
+          totalItems: 0,
+          totalRevenue: 0
+        };
+      }
+      
+      complexityByCustomerCount[customerCount].sessionCount++;
+      complexityByCustomerCount[customerCount].totalDuration += duration;
+      complexityByCustomerCount[customerCount].totalItems += sessionItems.length;
+      complexityByCustomerCount[customerCount].totalRevenue += revenue;
+    });
+    
+    // Calculate averages
+    const result = {};
+    Object.keys(complexityByCustomerCount).forEach(customerCount => {
+      const data = complexityByCustomerCount[customerCount];
+      result[customerCount] = {
+        avgDuration: data.totalDuration / data.sessionCount,
+        avgItems: data.totalItems / data.sessionCount,
+        avgRevenue: data.totalRevenue / data.sessionCount,
+        sessionCount: data.sessionCount
+      };
+    });
+    
+    return result;
   }
 
   exportData() {

@@ -89,13 +89,12 @@ class AnalyticsApp {
   renderCharts() {
     this.renderSessionChart();
     this.renderRevenueChart();
+    this.renderComplexityChart();
   }
 
   renderSessionChart() {
     const container = document.getElementById('session-chart');
     const data = analytics.metrics.sessionsByDate;
-    
-    console.log('[Session Chart] Raw data:', data);
     
     if (!data || Object.keys(data).length === 0) {
       container.innerHTML = '<p style="color: var(--text-secondary);">No session data available</p>';
@@ -107,15 +106,12 @@ class AnalyticsApp {
       .sort(([dateA], [dateB]) => new Date(dateA) - new Date(dateB))
       .slice(-7);
 
-    console.log('[Session Chart] Entries to render:', entries);
-
     if (entries.length === 0) {
       container.innerHTML = '<p style="color: var(--text-secondary);">No session data available</p>';
       return;
     }
 
     const maxValue = Math.max(...entries.map(([_, value]) => value), 1);
-    console.log('[Session Chart] Max value:', maxValue);
 
     container.innerHTML = `
       <div class="chart-bar">
@@ -165,6 +161,92 @@ class AnalyticsApp {
               <div class="bar-value">${analytics.formatCurrency(revenue)}</div>
               <div class="bar" style="height: ${heightPercent}%; background: var(--success);"></div>
               <div class="bar-label">${date}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  renderComplexityChart() {
+    const container = document.getElementById('complexity-chart');
+    const data = analytics.metrics.sessionComplexity;
+    
+    if (!data || Object.keys(data).length === 0) {
+      container.innerHTML = '<p style="color: var(--text-secondary);">No session complexity data available</p>';
+      return;
+    }
+
+    // Sort by customer count
+    const entries = Object.entries(data)
+      .sort(([a], [b]) => parseInt(a) - parseInt(b))
+      .filter(([customerCount]) => parseInt(customerCount) > 0); // Exclude 0 customers
+
+    if (entries.length === 0) {
+      container.innerHTML = '<p style="color: var(--text-secondary);">No session complexity data available</p>';
+      return;
+    }
+
+    const maxDuration = Math.max(...entries.map(([_, v]) => v.avgDuration), 1);
+
+    container.innerHTML = `
+      <div class="complexity-chart">
+        ${entries.map(([customerCount, metrics]) => {
+          const heightPercent = Math.max((metrics.avgDuration / maxDuration) * 100, 8);
+          const label = customerCount === '1' ? '1 customer' : `${customerCount} customers`;
+          
+          return `
+            <div class="complexity-item">
+              <div class="complexity-value">
+                <div>${Math.round(metrics.avgDuration)}min</div>
+                <div class="complexity-subvalue">${metrics.avgItems.toFixed(1)} items</div>
+              </div>
+              <div class="bar" style="height: ${heightPercent}%; background: var(--info);"></div>
+              <div class="bar-label">${label}</div>
+              <div class="complexity-count">${metrics.sessionCount} sessions</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  renderComplexityChart() {
+    const container = document.getElementById('complexity-chart');
+    const data = analytics.metrics.sessionComplexity;
+    
+    if (!data || Object.keys(data).length === 0) {
+      container.innerHTML = '<p style="color: var(--text-secondary);">No session complexity data available</p>';
+      return;
+    }
+
+    // Sort by customer count
+    const entries = Object.entries(data)
+      .sort(([a], [b]) => parseInt(a) - parseInt(b))
+      .filter(([customerCount]) => parseInt(customerCount) > 0); // Exclude 0 customers
+
+    if (entries.length === 0) {
+      container.innerHTML = '<p style="color: var(--text-secondary);">No session complexity data available</p>';
+      return;
+    }
+
+    const maxDuration = Math.max(...entries.map(([_, v]) => v.avgDuration), 1);
+
+    container.innerHTML = `
+      <div class="complexity-chart">
+        ${entries.map(([customerCount, metrics]) => {
+          const heightPercent = Math.max((metrics.avgDuration / maxDuration) * 100, 8);
+          const label = customerCount === '1' ? '1 customer' : `${customerCount} customers`;
+          
+          return `
+            <div class="complexity-item">
+              <div class="complexity-value">
+                <div>${Math.round(metrics.avgDuration)}min</div>
+                <div class="complexity-subvalue">${metrics.avgItems.toFixed(1)} items</div>
+              </div>
+              <div class="bar" style="height: ${heightPercent}%; background: var(--info);"></div>
+              <div class="bar-label">${label}</div>
+              <div class="complexity-count">${metrics.sessionCount} sessions</div>
             </div>
           `;
         }).join('')}
