@@ -1,0 +1,45 @@
+# Build-time Dockerfile - copies files instead of mounting
+FROM node:20-slim
+
+# Install Android build dependencies
+RUN apt-get update && apt-get install -y \
+    openjdk-17-jdk \
+    gradle \
+    wget \
+    unzip \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set up Android SDK
+ENV ANDROID_HOME=/opt/android-sdk
+ENV PATH=${PATH}:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools
+
+RUN mkdir -p ${ANDROID_HOME}/cmdline-tools && \
+    wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O /tmp/cmdtools.zip && \
+    unzip -q /tmp/cmdtools.zip -d ${ANDROID_HOME}/cmdline-tools && \
+    mv ${ANDROID_HOME}/cmdline-tools/cmdline-tools ${ANDROID_HOME}/cmdline-tools/latest && \
+    rm /tmp/cmdtools.zip
+
+# Accept Android licenses
+RUN yes | sdkmanager --licenses || true
+
+# Install Android SDK packages
+RUN sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.0"
+
+# Install Capacitor CLI globally
+RUN npm install -g @capacitor/cli @capacitor/core
+
+WORKDIR /build
+
+# Copy project files
+COPY package.json package-lock.json capacitor.config.json ./
+COPY shop-tracker ./shop-tracker/
+
+# Install dependencies
+RUN npm install
+
+# Pre-generate Android platform (cached layer - only rebuilds if code changes above)
+RUN npx cap add android
+
+# Build command - only sync changes and build (much faster on reruns)
+CMD ["bash", "-c", "npx cap sync android && cd android && ./gradlew assembleDebug && echo '✅ APK built: android/app/build/outputs/apk/debug/app-debug.apk'"]
