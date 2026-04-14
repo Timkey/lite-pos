@@ -8,8 +8,13 @@ echo "🏗️ Building Android APK (no mount required)..."
 # Build Docker image with project files copied in
 docker build -f Dockerfile.build -t capacitor-builder .
 
-# Run the build
-docker run --name capacitor-build-temp capacitor-builder
+# Create a volume for Gradle cache persistence
+docker volume create gradle-cache 2>/dev/null || true
+
+# Run the build with persistent Gradle cache
+docker run --name capacitor-build-temp \
+  -v gradle-cache:/root/.gradle \
+  capacitor-builder
 
 # Extract the APK
 echo "📦 Extracting APK..."
