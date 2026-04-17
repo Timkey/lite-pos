@@ -13,6 +13,26 @@ class ShopDB {
       request.onerror = () => reject(request.error);
       request.onsuccess = () => {
         this.db = request.result;
+        
+        // Verify all stores exist
+        const expectedStores = ['sessions', 'tabs', 'lineItems', 'audioChunks', 'products', 'events'];
+        const missingStores = expectedStores.filter(store => !this.db.objectStoreNames.contains(store));
+        
+        if (missingStores.length > 0) {
+          console.error('[DB] Missing stores:', missingStores, '- Database needs to be recreated');
+          this.db.close();
+          
+          // Delete corrupted database and recreate
+          const deleteReq = indexedDB.deleteDatabase(this.dbName);
+          deleteReq.onsuccess = () => {
+            console.log('[DB] Corrupted database deleted, recreating...');
+            // Retry initialization
+            this.init().then(resolve).catch(reject);
+          };
+          deleteReq.onerror = () => reject(new Error('Failed to delete corrupted database'));
+          return;
+        }
+        
         console.log('[DB] Database initialized');
         resolve(this.db);
       };

@@ -1,5 +1,7 @@
 # Business Tools Dashboard
 
+**Quick Links:** [Documentation](docs/) | [Scripts](scripts/) | [Full Structure](STRUCTURE.md)
+
 ## Project Structure
 
 This repository contains multiple business applications accessible from a central dashboard.
@@ -7,6 +9,7 @@ This repository contains multiple business applications accessible from a centra
 ```
 /
 ├── index.html                 # Landing page dashboard
+├── db-inspector.html          # Database inspection tool
 ├── shop-tracker/              # Shop Activity Tracker App
 │   ├── index.html
 │   ├── manifest.json
@@ -14,8 +17,17 @@ This repository contains multiple business applications accessible from a centra
 │   ├── css/
 │   ├── js/
 │   └── assets/
-├── notes                      # Project documentation
-└── VALIDATION_STRATEGY.md
+├── analytics/                 # Analytics Dashboard
+│   ├── index.html
+│   ├── css/
+│   └── js/
+├── docs/                      # 📚 Project documentation
+│   ├── analytics/             # Analytics feature docs
+│   ├── development/           # Development guides
+│   └── README.md              # Documentation index
+├── scripts/                   # Python analysis scripts
+│   └── analyze_backup.py
+└── README.md                  # This file
 ```
 
 ## Applications
@@ -33,8 +45,24 @@ This repository contains multiple business applications accessible from a centra
 
 **Access:** Navigate to `/shop-tracker/index.html` or click from dashboard
 
+### 2. Analytics Dashboard (Active)
+**Path:** `/analytics/`
+**Database:** `ShopTrackerDB` (reads from Shop Tracker)
+**Features:**
+- Session quality analysis with authenticity scoring
+- Revenue and customer analytics
+- Behavioral pattern detection
+- Audio coverage tracking
+- Flagged session identification
+- Real-time quality metrics
+
+**Access:** Navigate to `/analytics/index.html` or click from dashboard
+
+### 3. DB Inspector (Active)
+**Path:** `/db-inspector.html`
+**Purpose:** Database inspection and management tool
+
 ### Future Apps
-- Analytics Dashboard
 - Inventory Manager
 - Customer Manager
 
@@ -56,12 +84,34 @@ This ensures:
 1. Serve from root directory: `python -m http.server 8000`
 2. Access dashboard: `http://localhost:8000/`
 3. Access Shop Tracker: `http://localhost:8000/shop-tracker/`
+4. Access Analytics: `http://localhost:8000/analytics/`
 
 ### Adding New Apps
 1. Create new folder: `/new-app-name/`
 2. Add app entry to `index.html` dashboard
 3. Use unique IndexedDB database name
 4. Configure service worker scope: `/new-app-name/`
+
+## Documentation
+
+📚 **All documentation is organized in the `docs/` folder.**
+
+See [docs/README.md](docs/README.md) for the complete documentation index.
+
+**Quick Links:**
+- Analytics Features: [docs/analytics/](docs/analytics/)
+- Development Guides: [docs/development/](docs/development/)
+- Quality Metrics Guide: [docs/analytics/QUALITY_METRICS_GUIDE.md](docs/analytics/QUALITY_METRICS_GUIDE.md)
+
+## Scripts
+
+Python analysis scripts are located in `scripts/`:
+- `analyze_backup.py` - Analyzes ShopTracker backup data for quality metrics
+
+**Usage:**
+```bash
+python3 scripts/analyze_backup.py path/to/backup.json
+```
 
 ## Browser Storage
 

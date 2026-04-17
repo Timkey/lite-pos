@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IndexedDB Debug</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 2rem;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+        .section {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: #252526;
+            border-radius: 4px;
+        }
+        button {
+            padding: 0.5rem 1rem;
+            margin: 0.5rem;
+            background: #0e639c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #1177bb;
+        }
+        pre {
+            background: #1e1e1e;
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>IndexedDB Diagnostic Tool</h1>
+    
+    <div class="section">
+        <h2>Available Databases</h2>
+        <button onclick="listDatabases()">List All Databases</button>
+        <pre id="databases-output">Click button to scan...</pre>
+    </div>
+
+    <div class="section">
+        <h2>ShopTrackerDB Info</h2>
+        <button onclick="inspectShopTrackerDB()">Inspect ShopTrackerDB</button>
+        <button onclick="deleteEmptyDB()">Delete Empty Database</button>
+        <pre id="shoptracker-output">Click button to inspect...</pre>
+    </div>
+
+    <div class="section">
+        <h2>Data Counts</h2>
+        <button onclick="countData()">Count All Data</button>
+        <pre id="counts-output">Click button to count...</pre>
+    </div>
+
+    <script>
+        async function listDatabases() {
+            const output = document.getElementById('databases-output');
+            try {
+                const databases = await indexedDB.databases();
+                output.textContent = JSON.stringify(databases, null, 2);
+            } catch (err) {
+                output.textContent = 'Error: ' + err.message;
+            }
+        }
+
+        async function inspectShopTrackerDB() {
+            const output = document.getElementById('shoptracker-output');
+            try {
+                const request = indexedDB.open('ShopTrackerDB');
+                
+                request.onsuccess = () => {
+                    const db = request.result;
+                    const info = {
+                        name: db.name,
+                        version: db.version,
+                        objectStores: Array.from(db.objectStoreNames),
+                        storeCount: db.objectStoreNames.length
+                    };
+                    output.textContent = JSON.stringify(info, null, 2);
+                    db.close();
+                };
+
+                request.onerror = () => {
+                    output.textContent = 'Error: ' + request.error;
+                };
+            } catch (err) {
+                output.textContent = 'Error: ' + err.message;
+            }
+        }
+
+        async function deleteEmptyDB() {
+            const output = document.getElementById('shoptracker-output');
+            try {
+                const request = indexedDB.open('ShopTrackerDB');
+                
+                request.onsuccess = () => {
+                    const db = request.result;
+                    const version = db.version;
+                    const storeCount = db.objectStoreNames.length;
+                    db.close();
+
+                    if (version === 1 && storeCount === 0) {
+                        output.textContent = 'Deleting empty database...';
+                        const deleteReq = indexedDB.deleteDatabase('ShopTrackerDB');
+                        deleteReq.onsuccess = () => {
+                            output.textContent = 'Empty database deleted! Please open shop-tracker app now.';
+                        };
+                        deleteReq.onerror = () => {
+                            output.textContent = 'Error deleting: ' + deleteReq.error;
+                        };
+                    } else {
+                        output.textContent = `Database has data (version ${version}, ${storeCount} stores). Not deleting.`;
+                    }
+                };
+
+                request.onerror = () => {
+                    output.textContent = 'Error: ' + request.error;
+                };
+            } catch (err) {
+                output.textContent = 'Error: ' + err.message;
+            }
+        }
+
+        async function countData() {
+            const output = document.getElementById('counts-output');
+            try {
+                const request = indexedDB.open('ShopTrackerDB');
+                
+                request.onsuccess = async () => {
+                    const db = request.result;
+                    const stores = Array.from(db.objectStoreNames);
+                    
+                    if (stores.length === 0) {
+                        output.textContent = 'No object stores found!';
+                        db.close();
+                        return;
+                    }
+
+                    const counts = {};
+                    for (const storeName of stores) {
+                        try {
+                            const tx = db.transaction(storeName, 'readonly');
+                            const store = tx.objectStore(storeName);
+                            const countReq = store.count();
+                            
+                            await new Promise((resolve, reject) => {
+                                countReq.onsuccess = () => {
+                                    counts[storeName] = countReq.result;
+                                    resolve();
+                                };
+                                countReq.onerror = () => reject(countReq.error);
+                            });
+                        } catch (err) {
+                            counts[storeName] = 'Error: ' + err.message;
+                        }
+                    }
+                    
+                    output.textContent = JSON.stringify(counts, null, 2);
+                    db.close();
+                };
+
+                request.onerror = () => {
+                    output.textContent = 'Database not found or error: ' + request.error;
+                };
+            } catch (err) {
+                output.textContent = 'Error: ' + err.message;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+#!/bin/sh
+# Git pre-commit hook to auto-update service worker versions
+# Works on Windows, Linux, and Mac
+#
+# To install: cp hooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+
+# List of service worker files to update
+SW_FILES="shop-tracker/sw.js analytics/sw.js db-inspector-sw.js sw.js"
+
+# Check if any tracked files are being committed
+if git diff --cached --name-only | grep -qE "shop-tracker|analytics|db-inspector|index.html"; then
+    echo "Application files modified, updating service worker versions..."
+    
+    # Get current date in YYYYMMDD format
+    DATE=$(date +%Y%m%d)
+    
+    # Get short hash of HEAD (current commit)
+    SHORT_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "initial")
+    
+    VERSION="${DATE}-${SHORT_HASH}"
+    
+    # Update VERSION in all service worker files
+    for SW_PATH in $SW_FILES; do
+        if [ -f "$SW_PATH" ]; then
+            # Use different sed syntax for macOS vs Linux
+            if sed --version >/dev/null 2>&1; then
+                # GNU sed (Linux, Git Bash on Windows)
+                sed -i "s/const VERSION = '[^']*';/const VERSION = '${VERSION}';/" "$SW_PATH"
+            else
+                # BSD sed (macOS)
+                sed -i '' "s/const VERSION = '[^']*';/const VERSION = '${VERSION}';/" "$SW_PATH"
+            fi
+            
+            # Re-stage the updated file
+            git add "$SW_PATH"
+            
+            echo "  ✓ Updated $(basename $SW_PATH) to version: $VERSION"
+        fi
+    done
+    
+    echo "All service workers updated to: $VERSION"
+fi
+
+exit 0
